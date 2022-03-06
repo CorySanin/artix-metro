@@ -1,5 +1,6 @@
 const fs = require('fs');
 const fsp = fs.promises;
+const readline = require('readline');
 const path = require('path');
 const spawn = require('child_process').spawn;
 const clc = require('cli-color');
@@ -90,6 +91,47 @@ async function refreshGpg(config) {
     await fsp.rm('signfile.asc');
 }
 
+/**
+ * increment pkgrel
+ * @param {string} repo super repo
+ * @param {*} package package to increment
+ * @returns Promise<void>
+ */
+function increment(repo, package) {
+    return new Promise(async (res, reject) => {
+        let pkgbuild = path.join(repo, package, 'trunk', 'PKGBUILD');
+        let lines = [];
+
+        const rl = readline.createInterface({
+            input: fs.createReadStream(pkgbuild),
+            output: process.stdout,
+            terminal: false
+        });
+
+        rl.on('line', async line => {
+            if (line.startsWith('pkgrel')) {
+                let pkgrel = line.split('=')[1].trim();
+                // let's not deal with floats in javascript
+                let num = pkgrel.split('.');
+                if (num.length == 1) {
+                    num.push(1);
+                }
+                else{
+                    num[1] = parseInt(num[1]) + 1;
+                }
+                lines.push(`pkgrel=${num.join('.')}`);
+            }
+            else {
+                lines.push(line);
+            }
+        });
+        rl.on('close', async () => {
+            await fsp.writeFile(pkgbuild, lines.join('\n') + '\n');
+            res();
+        });
+    })
+}
+
 process.argv.forEach((arg, i) => {
     let iPlus = i + 1;
     let args = process.argv;
@@ -106,9 +148,15 @@ if (JOB) {
         let job = JSON5.parse(await fsp.readFile(JOB));
         job.source = job.source || 'trunk';
         job.gpgpass = process.env.GPGPASS || job.gpgpass || '';
+        let inc = job.increment;
         let pkg = job.pkg;
+        let superrepo = job.repo || job.superrepo;
         if (!pkg) {
             console.error(clc.redBright('Must provide `pkg` command in config!'));
+            process.exit(1);
+        }
+        if (inc && !superrepo) {
+            console.error(clc.redBright('Must provide `repo` path in config if increment is enabled!'));
             process.exit(1);
         }
 
@@ -137,7 +185,12 @@ if (JOB) {
                 await refreshGpg(job);
                 console.log(clc.yellowBright(`Pushing ${p}...`));
                 if (job.source == 'trunk') {
-                    await runCommand('buildtree', ['-p', p, '-i']);
+                    if (increment) {
+                        await increment(superrepo, p);
+                    }
+                    else{
+                        await runCommand('buildtree', ['-p', p, '-i']);
+                    }
                 }
                 await runCommand(pkg, ['-p', p, '-s', job.source, '-u']);
                 console.log(clc.blueBright('Upgrade pushed'));
