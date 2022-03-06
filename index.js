@@ -104,13 +104,15 @@ process.argv.forEach((arg, i) => {
 if (JOB) {
     (async function () {
         let job = JSON5.parse(await fsp.readFile(JOB));
+        job.source = job.source || 'trunk';
+        job.gpgpass = process.env.GPGPASS || job.gpgpass || '';
         let pkg = job.pkg;
         if (!pkg) {
             console.error(clc.redBright('Must provide `pkg` command in config!'));
             process.exit(1);
         }
 
-        console.log('packagepusher for Artix\n');
+        console.log('artix-packy-pusher\nCory Sanin\n');
 
         let jenkOptions = job.jenkins;
         let jUrl = jenkOptions.url || 'https://orion.artixlinux.org';
@@ -134,8 +136,10 @@ if (JOB) {
                 console.log((new Date()).toLocaleTimeString() + clc.magentaBright(` Package ${i}/${job.packages.length}`));
                 await refreshGpg(job);
                 console.log(clc.yellowBright(`Pushing ${p}...`));
-                await runCommand('buildtree', ['-p', p, '-i']);
-                await runCommand(pkg, ['-p', p, '-u']);
+                if (job.source == 'trunk') {
+                    await runCommand('buildtree', ['-p', p, '-i']);
+                }
+                await runCommand(pkg, ['-p', p, '-s', job.source, '-u']);
                 console.log(clc.blueBright('Upgrade pushed'));
                 await page.goto(`${jUrl}/job/packages${p.charAt(0).toUpperCase()}/job/${p}/job/master/`);
                 try {

@@ -5,6 +5,7 @@
     },
     "pkg": "testingpkg",
     "gpgpass": "gpgSigningPassword",
+    "source": "trunk",
     "packages": [
         "grantleetheme",
         "kpimtextedit",
