@@ -9,8 +9,8 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
-    "cli-color": "2.0.1",
-    "json5": "^2.2.0",
-    "puppeteer": "13.4.1"
+    "cli-color": "2.0.2",
+    "json5": "2.2.1",
+    "puppeteer": "13.6.0"
   }
 }

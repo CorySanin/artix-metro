@@ -11,7 +11,7 @@ const SELECTORS = {
     login_username: '#j_username',
     login_password: 'input[name=j_password]',
     login_button: '.submit input',
-    login_finish: '.breadcrumbBarAnchor',
+    login_finish: '#breadcrumbBar',
     build_row: '#buildHistory .build-row:nth-of-type(2)',
     build_timestamp: '#buildHistory .build-row:nth-of-type(2) div:nth-of-type(2) .build-link',
     build_icon_outer_ring: '#buildHistory .build-row:nth-of-type(2) .build-status-icon__outer svg'
@@ -178,14 +178,14 @@ if (JOB) {
         for (let i = 0; i < (job.packages || []).length; i++) {
             let p = job.packages[i];
             if (START === p) {
-                START = null
+                START = null;
             }
             if (START === null) {
                 console.log((new Date()).toLocaleTimeString() + clc.magentaBright(` Package ${i}/${job.packages.length}`));
                 await refreshGpg(job);
-                console.log(clc.yellowBright(`Pushing ${p}...`));
+                console.log(clc.yellowBright(`Pushing ${p} ...`));
                 if (job.source == 'trunk') {
-                    if (increment) {
+                    if (inc) {
                         await increment(superrepo, p);
                     }
                     else{
@@ -193,7 +193,7 @@ if (JOB) {
                     }
                 }
                 await runCommand(pkg, ['-p', p, '-s', job.source, '-u']);
-                console.log(clc.blueBright('Upgrade pushed'));
+                console.log(clc.blueBright(`${p} upgrade pushed`));
                 await page.goto(`${jUrl}/job/packages${p.charAt(0).toUpperCase()}/job/${p}/job/master/`);
                 try {
                     await waitForBuild(page);
