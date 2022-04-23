@@ -116,7 +116,7 @@ function increment(repo, package) {
                 if (num.length == 1) {
                     num.push(1);
                 }
-                else{
+                else {
                     num[1] = parseInt(num[1]) + 1;
                 }
                 lines.push(`pkgrel=${num.join('.')}`);
@@ -148,6 +148,7 @@ if (JOB) {
         let job = JSON5.parse(await fsp.readFile(JOB));
         job.source = job.source || 'trunk';
         job.gpgpass = process.env.GPGPASS || job.gpgpass || '';
+        let verifyJenkins = job.source === 'trunk';
         let inc = job.increment;
         let pkg = job.pkg;
         let superrepo = job.repo || job.superrepo;
@@ -164,15 +165,17 @@ if (JOB) {
 
         let jenkOptions = job.jenkins;
         let jUrl = jenkOptions.url || 'https://orion.artixlinux.org';
-        const browser = await puppeteer.launch({ headless: true });
-        const page = (await browser.pages())[0];
-        console.log(clc.yellowBright('Logging in to Jenkins'));
-        await page.goto(`${jUrl}/login`);
-        await page.waitForSelector(SELECTORS.login_username);
-        await page.type(SELECTORS.login_username, jenkOptions.username);
-        await page.type(SELECTORS.login_password, jenkOptions.password);
-        await page.click(SELECTORS.login_button);
-        await page.waitForSelector(SELECTORS.login_finish);
+        const browser = verifyJenkins ? (await puppeteer.launch({ headless: true })) : null;
+        const page = verifyJenkins ? (await browser.pages())[0] : null;
+        if (verifyJenkins) {
+            console.log(clc.yellowBright('Logging in to Jenkins'));
+            await page.goto(`${jUrl}/login`);
+            await page.waitForSelector(SELECTORS.login_username);
+            await page.type(SELECTORS.login_username, jenkOptions.username);
+            await page.type(SELECTORS.login_password, jenkOptions.password);
+            await page.click(SELECTORS.login_button);
+            await page.waitForSelector(SELECTORS.login_finish);
+        }
 
         // order is IMPORTANT. Must be BLOCKING.
         for (let i = 0; i < (job.packages || []).length; i++) {
@@ -188,27 +191,31 @@ if (JOB) {
                     if (inc) {
                         await increment(superrepo, p);
                     }
-                    else{
+                    else {
                         await runCommand('buildtree', ['-p', p, '-i']);
                     }
                 }
                 await runCommand(pkg, ['-p', p, '-s', job.source, '-u']);
                 console.log(clc.blueBright(`${p} upgrade pushed`));
-                await page.goto(`${jUrl}/job/packages${p.charAt(0).toUpperCase()}/job/${p}/job/master/`);
-                try {
-                    await waitForBuild(page);
-                    console.log(clc.greenBright(`${p} built successfully.`));
-                }
-                catch (ex) {
-                    console.error(clc.redBright(`Failed on ${p}:`));
-                    console.error(ex);
-                    process.exit(1);
+                if (verifyJenkins) {
+                    await page.goto(`${jUrl}/job/packages${p.charAt(0).toUpperCase()}/job/${p}/job/master/`);
+                    try {
+                        await waitForBuild(page);
+                        console.log(clc.greenBright(`${p} built successfully.`));
+                    }
+                    catch (ex) {
+                        console.error(clc.redBright(`Failed on ${p}:`));
+                        console.error(ex);
+                        process.exit(1);
+                    }
                 }
             }
         }
         console.log(clc.greenBright('SUCCESS: All packages built'));
-        browser.close();
-    })()
+        if (verifyJenkins) {
+            browser.close();
+        }
+    })();
 }
 else {
     console.error(clc.redBright('A job file must be provided.\n--job {path/to/job.json(5)}'));
