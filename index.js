@@ -6,11 +6,12 @@ const spawn = require('child_process').spawn;
 const clc = require('cli-color');
 const JSON5 = require('json5');
 const puppeteer = require('puppeteer');
+const comparepkg = require('./comparepkg');
 
 const SELECTORS = {
     login_username: '#j_username',
     login_password: 'input[name=j_password]',
-    login_button: '.submit input',
+    login_button: '.submit button',
     login_finish: '#breadcrumbBar',
     build_row: '#buildHistory .build-row:nth-of-type(2)',
     build_timestamp: '#buildHistory .build-row:nth-of-type(2) div:nth-of-type(2) .build-link',
@@ -145,6 +146,7 @@ process.argv.forEach((arg, i) => {
 
 if (JOB) {
     (async function () {
+        let compare = null;
         let job = JSON5.parse(await fsp.readFile(JOB));
         job.source = job.source || 'trunk';
         job.gpgpass = process.env.GPGPASS || job.gpgpass || '';
@@ -162,6 +164,12 @@ if (JOB) {
         }
 
         console.log('artix-packy-pusher\nCory Sanin\n');
+
+        if (job.source === 'trunk') {
+            console.log(clc.yellowBright('Running comparepkg -u'));
+            compare = new comparepkg();
+            await compare.FetchUpgradable();
+        }
 
         let jenkOptions = job.jenkins;
         let jUrl = jenkOptions.url || 'https://orion.artixlinux.org';
@@ -184,37 +192,43 @@ if (JOB) {
                 START = null;
             }
             if (START === null) {
-                console.log((new Date()).toLocaleTimeString() + clc.magentaBright(` Package ${i}/${job.packages.length}`));
-                await refreshGpg(job);
-                console.log(clc.yellowBright(`Pushing ${p} ...`));
-                if (job.source == 'trunk') {
-                    if (inc) {
-                        await increment(superrepo, p);
+                if (compare === null || compare.IsUpgradable(p)) {
+                    console.log((new Date()).toLocaleTimeString() + clc.magentaBright(` Package ${i}/${job.packages.length}`));
+                    await refreshGpg(job);
+                    console.log(clc.yellowBright(`Pushing ${p} ...`));
+                    if (job.source == 'trunk') {
+                        if (inc) {
+                            await increment(superrepo, p);
+                        }
+                        else {
+                            await runCommand('buildtree', ['-p', p, '-i']);
+                        }
                     }
-                    else {
-                        await runCommand('buildtree', ['-p', p, '-i']);
+                    await runCommand(pkg, ['-p', p, '-s', job.source, '-u']);
+                    console.log(clc.blueBright(`${p} upgrade pushed`));
+                    if (verifyJenkins) {
+                        await page.goto(`${jUrl}/job/packages${p.charAt(0).toUpperCase()}/job/${p}/job/master/`);
+                        try {
+                            await waitForBuild(page);
+                            console.log(clc.greenBright(`${p} built successfully.`));
+                        }
+                        catch (ex) {
+                            console.error(clc.redBright(`Failed on ${p}:`));
+                            console.error(ex);
+                            process.exit(1);
+                        }
                     }
                 }
-                await runCommand(pkg, ['-p', p, '-s', job.source, '-u']);
-                console.log(clc.blueBright(`${p} upgrade pushed`));
-                if (verifyJenkins) {
-                    await page.goto(`${jUrl}/job/packages${p.charAt(0).toUpperCase()}/job/${p}/job/master/`);
-                    try {
-                        await waitForBuild(page);
-                        console.log(clc.greenBright(`${p} built successfully.`));
-                    }
-                    catch (ex) {
-                        console.error(clc.redBright(`Failed on ${p}:`));
-                        console.error(ex);
-                        process.exit(1);
-                    }
+                else {
+                    console.log(clc.magenta(`${p} isn't marked as upgradable. Skipping.`));
                 }
             }
         }
         console.log(clc.greenBright('SUCCESS: All packages built'));
         if (verifyJenkins) {
-            browser.close();
+            await browser.close();
         }
+        process.exit(0);
     })();
 }
 else {

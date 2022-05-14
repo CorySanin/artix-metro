@@ -11,6 +11,6 @@
   "dependencies": {
     "cli-color": "2.0.2",
     "json5": "2.2.1",
-    "puppeteer": "13.6.0"
+    "puppeteer": "14.0.0"
   }
 }
