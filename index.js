@@ -204,7 +204,7 @@ if (JOB) {
                             await runCommand('buildtree', ['-p', p, '-i']);
                         }
                     }
-                    await runCommand(pkg, ['-p', p, '-s', job.source, '-u']);
+                    await runCommand(pkg, ['-p', p, '-s', job.source]);
                     console.log(clc.blueBright(`${p} upgrade pushed`));
                     if (verifyJenkins) {
                         await page.goto(`${jUrl}/job/packages${p.charAt(0).toUpperCase()}/job/${p}/job/master/`);
