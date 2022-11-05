@@ -83,6 +83,26 @@ function runCommand(command, args = []) {
 }
 
 /**
+ * Locate the package directory
+ * @param {string} package 
+ * @returns path to package
+ */
+async function findGroup(package) {
+    let base = '/home/cory/Documents/pkg/artixlinux/';
+    let groups = ['addons', 'desktop', 'main'];
+    for (let i = 0; i < groups.length; i++) {
+        try {
+            let trypath = path.join(base, groups[i], package);
+            await fsp.readdir(trypath);
+            return trypath;
+        }
+        catch {
+        }
+    }
+    return null;
+}
+
+/**
  * Input gpg passphrase so pushing commits won't require it
  * @param {*} config the json config
  */
@@ -202,6 +222,10 @@ if (JOB) {
                         }
                         else {
                             await runCommand('buildtree', ['-p', p, '-i']);
+                            let ppath = await findGroup(p);
+                            if (ppath){
+                                await runCommand('sed', ['-i', '-e', 's/cmake\\( .*-B\\)/artix-cmake\\1/g', path.join(ppath, 'trunk', 'PKGBUILD')]);
+                            }
                         }
                     }
                     await runCommand(pkg, ['-p', p, '-s', job.source]);
