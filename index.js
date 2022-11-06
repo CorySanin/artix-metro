@@ -207,7 +207,9 @@ if (JOB) {
 
         // order is IMPORTANT. Must be BLOCKING.
         for (let i = 0; i < (job.packages || []).length; i++) {
-            let p = job.packages[i];
+            let pFullName = job.packages[i]
+            let p = pFullName.split('/');
+            p = p[Math.min(1, p.length - 1)];
             if (START === p) {
                 START = null;
             }
