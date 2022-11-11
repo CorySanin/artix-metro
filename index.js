@@ -214,7 +214,7 @@ if (JOB) {
                 START = null;
             }
             if (START === null) {
-                if (compare === null || compare.IsUpgradable(p)) {
+                if (inc || compare === null || compare.IsUpgradable(p)) {
                     console.log((new Date()).toLocaleTimeString() + clc.magentaBright(` Package ${i}/${job.packages.length}`));
                     await refreshGpg(job);
                     console.log(clc.yellowBright(`Pushing ${p} ...`));
