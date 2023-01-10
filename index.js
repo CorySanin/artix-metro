@@ -15,7 +15,7 @@ const SELECTORS = {
     login_finish: '#breadcrumbBar',
     build_row: '#buildHistory .build-row:nth-of-type(2)',
     build_timestamp: '#buildHistory .build-row:nth-of-type(2) div:nth-of-type(2) .build-link',
-    build_icon_outer_ring: '#buildHistory .build-row:nth-of-type(2) .build-status-icon__outer svg'
+    build_status_link: '#buildHistory .build-row:nth-of-type(2) .build-status-link'
 }
 
 const BUILDAGE = process.env.BUILDAGE || 3;
@@ -34,10 +34,10 @@ const snooze = ms => new Promise(resolve => setTimeout(resolve, ms));
  * @param {puppeteer.Page} page 
  */
 async function waitForBuild(page) {
-    let timestamp, outerRing;
+    let timestamp, buildStatus;
     let updateVars = async () => {
         timestamp = await page.$(SELECTORS.build_timestamp);
-        outerRing = await page.$(SELECTORS.build_icon_outer_ring);
+        buildStatus = await page.$(SELECTORS.build_status_link);
     }
 
     await page.waitForSelector(SELECTORS.build_row);
@@ -58,8 +58,9 @@ async function waitForBuild(page) {
     }
     console.log(clc.greenBright('Build found'));
     let status;
-    while ((await updateVars()) || !outerRing ||
-        (status = await outerRing.evaluate(E => E.getAttribute('tooltip'))).startsWith('In progress')) {
+    while ((await updateVars()) || !buildStatus ||
+        !(status = await buildStatus.evaluate(E => E.getAttribute('title'))) ||
+        status.startsWith('In progress')) {
         await snooze(5000);
     }
     if (!status.startsWith('Success')) {
