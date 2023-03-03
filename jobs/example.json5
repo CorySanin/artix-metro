@@ -1,10 +1,9 @@
 {
-    "jenkins": {
-        "username": "jenkinsUsername",
-        "password": "jenkinsPassword"
+    "gitea": {
+        "token": "youReGiteAtoKeNhERe",
+        "domain": "gitea.artixlinux.org"
     },
     "pkg": "testingpkg",
-    "gpgpass": "gpgSigningPassword",
     "source": "trunk",
     "packages": [
         "grantleetheme",

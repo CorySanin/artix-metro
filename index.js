@@ -1,24 +1,14 @@
 const fs = require('fs');
 const fsp = fs.promises;
 const readline = require('readline');
+const Writable = require('stream').Writable;
 const path = require('path');
 const spawn = require('child_process').spawn;
 const clc = require('cli-color');
 const JSON5 = require('json5');
-const puppeteer = require('puppeteer');
 const comparepkg = require('./comparepkg');
+const giteaapi = require('./gitea');
 
-const SELECTORS = {
-    login_username: '#j_username',
-    login_password: 'input[name=j_password]',
-    login_button: '.submit button',
-    login_finish: '#breadcrumbBar',
-    build_row: '#buildHistory .build-row:nth-of-type(2)',
-    build_timestamp: '#buildHistory .build-row:nth-of-type(2) div:nth-of-type(2) .build-link',
-    build_status_link: '#buildHistory .build-row:nth-of-type(2) .build-status-link'
-}
-
-const BUILDAGE = process.env.BUILDAGE || 3;
 let JOB = process.env.JOB;
 let START = null;
 
@@ -31,40 +21,31 @@ const snooze = ms => new Promise(resolve => setTimeout(resolve, ms));
 
 /**
  * Wait for a new build to succeed
- * @param {puppeteer.Page} page 
+ * @param {giteaapi} j 
+ * @param {string} pkg 
+ * @param {string} lastHash 
  */
-async function waitForBuild(page) {
-    let timestamp, buildStatus;
-    let updateVars = async () => {
-        timestamp = await page.$(SELECTORS.build_timestamp);
-        buildStatus = await page.$(SELECTORS.build_status_link);
-    }
-
-    await page.waitForSelector(SELECTORS.build_row);
-    let foundBuild = false;
-    while (!foundBuild) {
-        await updateVars();
-        if (timestamp) {
-            let ts = await (await timestamp.getProperty('innerText')).jsonValue();
-            let timeDiff = (new Date()).getTime() - (new Date(ts)).getTime();
-            if (!(foundBuild = BUILDAGE * 60000 > timeDiff)) {// 60 minutes * 1000 ms
-                await snooze(5000);
-            }
+async function waitForBuild(j, pkg, lastHash) {
+    while (true) {
+        let status;
+        try {
+            status = await j.getStatus(pkg);
         }
-        else {
-            console.debug('No timestamp (perhaps pending)');
+        catch {
+            status = null;
             await snooze(30000);
         }
-    }
-    console.log(clc.greenBright('Build found'));
-    let status;
-    while ((await updateVars()) || !buildStatus ||
-        !(status = await buildStatus.evaluate(E => E.getAttribute('title'))) ||
-        status.startsWith('In progress')) {
-        await snooze(5000);
-    }
-    if (!status.startsWith('Success')) {
-        throw `Build failed. Status: "${status}"`;
+        if (status) {
+            if (status.sha !== lastHash) {
+                if (status.state === 'success') {
+                    break;
+                }
+                else if (status.state === 'failure') {
+                    throw `Build ${status.sha} failed. ${j.getHomepage()}${pkg}`;
+                }
+            }
+            await snooze(5000);
+        }
     }
 }
 
@@ -83,24 +64,29 @@ function runCommand(command, args = []) {
     });
 }
 
-/**
- * Locate the package directory
- * @param {string} package 
- * @returns path to package
- */
-async function findGroup(package) {
-    let base = '/home/cory/Documents/pkg/artixlinux/';
-    let groups = ['addons', 'desktop', 'main'];
-    for (let i = 0; i < groups.length; i++) {
-        try {
-            let trypath = path.join(base, groups[i], package);
-            await fsp.readdir(trypath);
-            return trypath;
-        }
-        catch {
-        }
-    }
-    return null;
+function getGpgPass() {
+    return new Promise(resolve => {
+        let mutableStdout = new Writable({
+            write: function (chunk, encoding, callback) {
+                if (!this.muted) {
+                    process.stdout.write(chunk, encoding);
+                }
+                callback();
+            }
+        });
+        let rl = readline.createInterface({
+            input: process.stdin,
+            output: mutableStdout,
+            terminal: true
+        });
+        mutableStdout.muted = false;
+        rl.question(clc.yellow('Enter your GPG password: '), (password) => {
+            rl.close();
+            console.log();
+            resolve(password);
+        });
+        mutableStdout.muted = true;
+    });
 }
 
 /**
@@ -170,7 +156,7 @@ if (JOB) {
         let compare = null;
         let job = JSON5.parse(await fsp.readFile(JOB));
         job.source = job.source || 'trunk';
-        job.gpgpass = process.env.GPGPASS || job.gpgpass || '';
+        job.gpgpass = process.env.GPGPASS || (await getGpgPass()) || '';
         let verifyJenkins = job.source === 'trunk';
         let inc = job.increment;
         let pkg = job.pkg;
@@ -186,28 +172,16 @@ if (JOB) {
 
         console.log('artix-packy-pusher\nCory Sanin\n');
 
+        const gitea = new giteaapi(job.gitea);
         if (job.source === 'trunk') {
             console.log(clc.yellowBright('Running comparepkg -u'));
             compare = new comparepkg();
             await compare.FetchUpgradable();
         }
 
-        let jenkOptions = job.jenkins;
-        let jUrl = jenkOptions.url || 'https://orion.artixlinux.org';
-        const browser = verifyJenkins ? (await puppeteer.launch({ headless: true })) : null;
-        const page = verifyJenkins ? (await browser.pages())[0] : null;
-        if (verifyJenkins) {
-            console.log(clc.yellowBright('Logging in to Jenkins'));
-            await page.goto(`${jUrl}/login`);
-            await page.waitForSelector(SELECTORS.login_username);
-            await page.type(SELECTORS.login_username, jenkOptions.username);
-            await page.type(SELECTORS.login_password, jenkOptions.password);
-            await page.click(SELECTORS.login_button);
-            await page.waitForSelector(SELECTORS.login_finish);
-        }
-
         // order is IMPORTANT. Must be BLOCKING.
         for (let i = 0; i < (job.packages || []).length; i++) {
+            let lastHash = '';
             let pFullName = job.packages[i]
             let p = pFullName.split('/');
             p = p[Math.min(1, p.length - 1)];
@@ -215,8 +189,12 @@ if (JOB) {
                 START = null;
             }
             if (START === null) {
-                if (inc || compare === null || compare.IsUpgradable(p)) {
+                if (compare === null || compare.IsUpgradable(p)) {
                     console.log((new Date()).toLocaleTimeString() + clc.magentaBright(` Package ${i}/${job.packages.length}`));
+                    if (verifyJenkins) {
+                        lastHash = (await gitea.getStatus(pFullName)).sha
+                        console.log(`current sha: ${lastHash}`);
+                    }
                     await refreshGpg(job);
                     console.log(clc.yellowBright(`Pushing ${p} ...`));
                     if (job.source == 'trunk') {
@@ -224,19 +202,14 @@ if (JOB) {
                             await increment(superrepo, p);
                         }
                         else {
-                            await runCommand('buildtree', ['-p', p, '-i']);
-                            let ppath = await findGroup(p);
-                            if (ppath){
-                                await runCommand('sed', ['-i', '-e', 's/cmake\\( .*-B\\)/artix-cmake\\1/g', path.join(ppath, 'trunk', 'PKGBUILD')]);
-                            }
+                            await runCommand('btimport', [p]);
                         }
                     }
                     await runCommand(pkg, ['-p', p, '-s', job.source]);
                     console.log(clc.blueBright(`${p} upgrade pushed`));
                     if (verifyJenkins) {
-                        await page.goto(`${jUrl}/job/packages${p.charAt(0).toUpperCase()}/job/${p}/job/master/`);
                         try {
-                            await waitForBuild(page);
+                            await waitForBuild(gitea, pFullName, lastHash);
                             console.log(clc.greenBright(`${p} built successfully.`));
                         }
                         catch (ex) {
@@ -252,9 +225,6 @@ if (JOB) {
             }
         }
         console.log(clc.greenBright('SUCCESS: All packages built'));
-        if (verifyJenkins) {
-            await browser.close();
-        }
         process.exit(0);
     })();
 }
