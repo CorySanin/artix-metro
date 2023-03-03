@@ -40,6 +40,7 @@ class Comparepkg {
             });
 
             child.on('exit', code => {
+                clearTimeout(to);
                 resolve(code);
             });
         });
