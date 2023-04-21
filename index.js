@@ -184,7 +184,7 @@ if (JOB) {
             let lastHash = '';
             let pFullName = job.packages[i]
             let p = pFullName.split('/');
-            p = p[Math.min(1, p.length - 1)];
+            p = p[p.length - 1];
             if (START === p) {
                 START = null;
             }
@@ -192,7 +192,16 @@ if (JOB) {
                 if (compare === null || compare.IsUpgradable(p)) {
                     console.log((new Date()).toLocaleTimeString() + clc.magentaBright(` Package ${i}/${job.packages.length}`));
                     if (verifyJenkins) {
-                        lastHash = (await gitea.getStatus(pFullName)).sha
+                        while(true) {
+                            try{
+                                lastHash = (await gitea.getStatus(pFullName)).sha
+                                break;
+                            }
+                            catch{
+                                console.log(clc.red(`Failed to get status of ${pFullName}. Retrying...`));
+                                await snooze(30000);
+                            }
+                        }
                         console.log(`current sha: ${lastHash}`);
                     }
                     await refreshGpg(job);
@@ -225,6 +234,7 @@ if (JOB) {
             }
         }
         console.log(clc.greenBright('SUCCESS: All packages built'));
+        await fsp.rm('signfile');
         process.exit(0);
     })();
 }

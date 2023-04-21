@@ -11,6 +11,6 @@
   "dependencies": {
     "cli-color": "2.0.3",
     "json5": "2.2.3",
-    "phin": "^3.7.0"
+    "phin": "3.7.0"
   }
 }
