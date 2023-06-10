@@ -4,15 +4,33 @@ use strict;
 use warnings;
 
 undef $/;
+my $pkgpath = "~/Documents/pkg/artixlinux";
 for (@ARGV) {
-    my @files = glob "~/Documents/pkg/artixlinux/$_/trunk/PKGBUILD";
+    print "Importing $_";
+    my @git = ("git", "-C", (glob "$pkgpath/$_/"), "pull");
+    exit 1 if system(@git) != 0;
+    my @files = glob "$pkgpath/$_/trunk/PKGBUILD";
     exit 1 if @files != 1;
     my $f = $files[0];
     open(FILE,$f);
     my $content = <FILE>;
     close(FILE);
     my @args = ("artixpkg", "repo", "import", "$_");
-    exit 255 if system(@args) == 255;
+    exit 255 if system(@args) != 0;
+    eval {
+        @files = glob "~/.makepkg.conf";
+        my $configfilename = $files[0];
+        open(FILE, $configfilename) or die "Failed to open $configfilename";
+        my $config = <FILE>;
+        close(FILE);
+        if ($config =~ /PACKAGER="([^"]+)"/) {
+            my @maintainer = ("sed", "-i", "1i# Maintainer: $1", $f);
+            exit 2 if system(@maintainer) != 0;
+        }
+    };
+    if ($@) {
+        print "$@";
+    }
     exit 0 if $content !~ /artix-cmake\s/;
     open(FILE,$f);
     $content = <FILE>;

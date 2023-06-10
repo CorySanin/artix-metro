@@ -4,7 +4,7 @@ const clc = require('cli-color');
 const TimeOut = 600000;
 const ExtraSpace = new RegExp('\\s+', 'g');
 
-class Comparepkg {
+class Checkupdates {
     upgradable = [];
 
     /**
@@ -15,8 +15,8 @@ class Comparepkg {
     FetchUpgradable(timeout = TimeOut) {
         return new Promise((resolve, reject) => {
             this.upgradable = [];
-            let linestart = -1;
-            let child = spawn('comparepkg', ['-u']);
+            let linestart = 0;
+            let child = spawn('artix-checkupdates', ['-u']);
 
 
             let to = setTimeout(() => {
@@ -26,24 +26,37 @@ class Comparepkg {
 
             child.stdout.setEncoding('utf8');
             child.stdout.on('data', data => {
-                let line = data.toString();
-                console.log(clc.blue(line));
-                if (linestart === -1) {
-                    linestart = line.indexOf('Arch Repo');
-                }
-                else {
-                    line = line.substring(linestart).trim().replace(ExtraSpace, ' ').split(' ', 3);
-                    if (line[0] !== 'Arch') {
-                        this.upgradable.push(line[2]);
+                let lines = data.toString().split('\n');
+                for (let i = 0; i < lines.length; i++) {
+                    let line = lines[i];
+                    if (linestart === -1) {
+                        linestart = line.indexOf('Package basename');
+                    }
+                    else {
+                        line = this.ParseLine(line, linestart);
+                        if (line[0] !== 'Package' && line[0].length > 0) {
+                            this.upgradable.push(line[0]);
+                        }
                     }
                 }
             });
 
             child.on('exit', code => {
+                this.upgradable.forEach(pkg => console.log(clc.blue(pkg)));
                 clearTimeout(to);
                 resolve(code);
             });
         });
+    }
+
+    /**
+     * Returns the first element from the line of a table
+     * @param {*} str The line to parse
+     * @param {*} linestart the amount of indentation
+     * @returns 
+     */
+    ParseLine(str, linestart = 0) {
+        return str.substring(linestart).trim().replace(ExtraSpace, ' ').split(' ');
     }
 
     /**
@@ -56,4 +69,4 @@ class Comparepkg {
     }
 }
 
-module.exports = Comparepkg;
+module.exports = Checkupdates;

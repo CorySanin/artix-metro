@@ -6,8 +6,10 @@ const path = require('path');
 const spawn = require('child_process').spawn;
 const clc = require('cli-color');
 const JSON5 = require('json5');
-const comparepkg = require('./comparepkg');
+const checkupdates = require('./Checkupdates');
 const giteaapi = require('./gitea');
+
+const PACKAGE_ORG = 'packages';
 
 let JOB = process.env.JOB;
 let START = null;
@@ -21,15 +23,15 @@ const snooze = ms => new Promise(resolve => setTimeout(resolve, ms));
 
 /**
  * Wait for a new build to succeed
- * @param {giteaapi} j 
+ * @param {giteaapi} tea 
  * @param {string} pkg 
  * @param {string} lastHash 
  */
-async function waitForBuild(j, pkg, lastHash) {
+async function waitForBuild(tea, pkg, lastHash) {
     while (true) {
         let status;
         try {
-            status = await j.getStatus(pkg);
+            status = await tea.getStatus(PACKAGE_ORG, pkg);
         }
         catch {
             status = null;
@@ -41,7 +43,7 @@ async function waitForBuild(j, pkg, lastHash) {
                     break;
                 }
                 else if (status.state === 'failure') {
-                    throw `Build ${status.sha} failed. ${j.getHomepage()}${pkg}`;
+                    throw `Build ${status.sha} failed. ${tea.getHomepage()}${PACKAGE_ORG}/${pkg}`;
                 }
             }
             await snooze(5000);
@@ -50,7 +52,7 @@ async function waitForBuild(j, pkg, lastHash) {
 }
 
 /**
- * Run a command (as a promise). Ignores exit code.
+ * Run a command (as a promise).
  * @param {string} command 
  * @param {string[]} args 
  * @returns Promise<number>
@@ -59,11 +61,20 @@ function runCommand(command, args = []) {
     return new Promise((res, reject) => {
         let proc = spawn(command, args, { stdio: ['ignore', process.stdout, process.stderr] });
         proc.on('exit', code => {
-            res(code);
+            if (code === 0) {
+                res();
+            }
+            else {
+                reject(code);
+            }
         });
     });
 }
 
+/**
+ * Prompts the user to input their GPG password via stdin
+ * @returns a promise that resolves the password
+ */
 function getGpgPass() {
     return new Promise(resolve => {
         let mutableStdout = new Writable({
@@ -101,13 +112,13 @@ async function refreshGpg(config) {
 
 /**
  * increment pkgrel
- * @param {string} repo super repo
+ * @param {string} directory location of all package git repos
  * @param {*} package package to increment
  * @returns Promise<void>
  */
-function increment(repo, package) {
+function increment(directory, package) {
     return new Promise(async (res, reject) => {
-        let pkgbuild = path.join(repo, package, 'trunk', 'PKGBUILD');
+        let pkgbuild = path.join(directory, package, 'trunk', 'PKGBUILD');
         let lines = [];
 
         const rl = readline.createInterface({
@@ -159,14 +170,14 @@ if (JOB) {
         job.gpgpass = process.env.GPGPASS || (await getGpgPass()) || '';
         let verifyJenkins = job.source === 'trunk';
         let inc = job.increment;
-        let pkg = job.pkg;
-        let superrepo = job.repo || job.superrepo;
-        if (!pkg) {
-            console.error(clc.redBright('Must provide `pkg` command in config!'));
+        let repo = job.repo;
+        let directory = job.directory || job.superrepo;
+        if (!repo) {
+            console.error(clc.redBright('Must provide `repo` destination in config!'));
             process.exit(1);
         }
-        if (inc && !superrepo) {
-            console.error(clc.redBright('Must provide `repo` path in config if increment is enabled!'));
+        if (inc && !directory) {
+            console.error(clc.redBright('Must provide `directory` path in config if increment is enabled!'));
             process.exit(1);
         }
 
@@ -174,17 +185,15 @@ if (JOB) {
 
         const gitea = new giteaapi(job.gitea);
         if (job.source === 'trunk') {
-            console.log(clc.yellowBright('Running comparepkg -u'));
-            compare = new comparepkg();
+            console.log(clc.yellowBright('Running artix-checkupdates'));
+            compare = new checkupdates();
             await compare.FetchUpgradable();
         }
 
         // order is IMPORTANT. Must be BLOCKING.
         for (let i = 0; i < (job.packages || []).length; i++) {
             let lastHash = '';
-            let pFullName = job.packages[i]
-            let p = pFullName.split('/');
-            p = p[p.length - 1];
+            let p = job.packages[i];
             if (START === p) {
                 START = null;
             }
@@ -192,13 +201,13 @@ if (JOB) {
                 if (compare === null || compare.IsUpgradable(p)) {
                     console.log((new Date()).toLocaleTimeString() + clc.magentaBright(` Package ${i}/${job.packages.length}`));
                     if (verifyJenkins) {
-                        while(true) {
-                            try{
-                                lastHash = (await gitea.getStatus(pFullName)).sha
+                        while (true) {
+                            try {
+                                lastHash = (await gitea.getStatus(PACKAGE_ORG, p)).sha
                                 break;
                             }
-                            catch{
-                                console.log(clc.red(`Failed to get status of ${pFullName}. Retrying...`));
+                            catch {
+                                console.log(clc.red(`Failed to get status of ${p}. Retrying...`));
                                 await snooze(30000);
                             }
                         }
@@ -208,17 +217,25 @@ if (JOB) {
                     console.log(clc.yellowBright(`Pushing ${p} ...`));
                     if (job.source == 'trunk') {
                         if (inc) {
-                            await increment(superrepo, p);
+                            await increment(directory, p);
                         }
                         else {
                             await runCommand('btimport', [p]);
                         }
+                        await runCommand('artixpkg', ['repo', 'add', '-p', repo, p]);
                     }
-                    await runCommand(pkg, ['-p', p, '-s', job.source]);
+                    else {
+                        try {
+                            await runCommand('artixpkg', ['repo', 'move', '-p', job.source, repo, p]);
+                        }
+                        catch {
+                            console.log(clc.cyan(`Moving ${p} failed. Maybe nothing to move. Continuing.`));
+                        }
+                    }
                     console.log(clc.blueBright(`${p} upgrade pushed`));
                     if (verifyJenkins) {
                         try {
-                            await waitForBuild(gitea, pFullName, lastHash);
+                            await waitForBuild(gitea, p, lastHash);
                             console.log(clc.greenBright(`${p} built successfully.`));
                         }
                         catch (ex) {
@@ -234,7 +251,12 @@ if (JOB) {
             }
         }
         console.log(clc.greenBright('SUCCESS: All packages built'));
-        await fsp.rm('signfile');
+        try {
+            await fsp.rm('signfile');
+        }
+        catch {
+            console.error(clc.red('failed to remove temp signfile'));
+        }
         process.exit(0);
     })();
 }
