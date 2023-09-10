@@ -220,7 +220,7 @@ if (JOB) {
                             await increment(directory, p);
                         }
                         else {
-                            await runCommand('btimport', [p]);
+                            await runCommand('pimport', [p]);
                         }
                         await runCommand('artixpkg', ['repo', 'add', '-p', repo, p]);
                     }
