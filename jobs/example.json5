@@ -7,7 +7,7 @@
     // use "trunk" to btimport and build. Or supply a repo name to move from that repo.
     "source": "trunk",
     // The destination repo
-    "repo": "extra-testing",
+    "repo": "world-gremlins",
     // The location for all the package repositories on your system
     "directory": "/home/cory/Documents/pkg/artixlinux/desktop",
     // (experimental) if set to true (and source is "trunk"),
@@ -75,7 +75,6 @@
         "kontact",
         "knotes",
         "akregator",
-        "kalendar",
         
         "libkexiv2",
         "kdegraphics-mobipocket",

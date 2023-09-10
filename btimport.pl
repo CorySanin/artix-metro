@@ -6,16 +6,18 @@ use warnings;
 undef $/;
 my $pkgpath = "~/Documents/pkg/artixlinux";
 for (@ARGV) {
-    print "Importing $_";
+    print "Importing $_\n";
+    my @gitreset = ("git", "-C", (glob "$pkgpath/$_/"), "reset", "--hard", "HEAD");
+    exit 1 if system(@gitreset) != 0;
     my @git = ("git", "-C", (glob "$pkgpath/$_/"), "pull");
     exit 1 if system(@git) != 0;
-    my @files = glob "$pkgpath/$_/trunk/PKGBUILD";
+    my @files = glob "$pkgpath/$_/PKGBUILD";
     exit 1 if @files != 1;
     my $f = $files[0];
     open(FILE,$f);
     my $content = <FILE>;
     close(FILE);
-    my @args = ("artixpkg", "repo", "import", "$_");
+    my @args = ("artixpkg", "repo", "import", "--del", "$_");
     exit 255 if system(@args) != 0;
     eval {
         @files = glob "~/.makepkg.conf";
