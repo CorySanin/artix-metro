@@ -1,6 +1,6 @@
 {
   "name": "packagepusher",
-  "version": "2.0.1",
+  "version": "2.1.0",
   "description": "Automate pushing packages to Artix",
   "main": "index.js",
   "scripts": {
