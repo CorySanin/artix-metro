@@ -1,6 +1,6 @@
 {
   "name": "packagepusher",
-  "version": "2.1.0",
+  "version": "2.1.1",
   "description": "Automate pushing packages to Artix",
   "main": "index.js",
   "scripts": {
@@ -9,7 +9,7 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
-    "cli-color": "2.0.3",
+    "cli-color": "2.0.4",
     "json5": "2.2.3",
     "phin": "3.7.0"
   }

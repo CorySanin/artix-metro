@@ -10,9 +10,11 @@ const checkupdates = require('./Checkupdates');
 const giteaapi = require('./gitea');
 
 const PACKAGE_ORG = 'packages';
+const SIGNATUREEXPIRY = 30000;//in ms
 
 let JOB = process.env.JOB;
 let START = null;
+let LASTSIGNTIME = new Date(0);
 
 /**
  * Sleep equivalent as a promise
@@ -105,9 +107,14 @@ function getGpgPass() {
  * @param {*} config the json config
  */
 async function refreshGpg(config) {
-    await runCommand('touch', ['signfile']);
-    await runCommand('gpg', ['-a', '--passphrase', config.gpgpass, '--batch', '--pinentry-mode', 'loopback', '--detach-sign', 'signfile']);
-    await fsp.rm('signfile.asc');
+    let currentTime = new Date();
+    if (currentTime.getTime() - LASTSIGNTIME.getTime() > SIGNATUREEXPIRY) {
+        console.log(clc.cyan('Refreshing signature...'));
+        await runCommand('touch', ['signfile']);
+        await runCommand('gpg', ['-a', '--passphrase', config.gpgpass, '--batch', '--pinentry-mode', 'loopback', '--detach-sign', 'signfile']);
+        await fsp.rm('signfile.asc');
+        LASTSIGNTIME = currentTime;
+    }
 }
 
 /**
@@ -118,7 +125,7 @@ async function refreshGpg(config) {
  */
 function increment(directory, package) {
     return new Promise(async (res, reject) => {
-        let pkgbuild = path.join(directory, package, 'trunk', 'PKGBUILD');
+        const pkgbuild = path.join(directory, package, 'PKGBUILD');
         let lines = [];
 
         const rl = readline.createInterface({
@@ -149,6 +156,22 @@ function increment(directory, package) {
             res();
         });
     })
+}
+
+async function isNewPackage(directory, package) {
+    if (!directory) {
+        return false;
+    }
+
+    try {
+        const pkgbuild = path.join(directory, package, 'PKGBUILD');
+        const stat = await fsp.stat(pkgbuild);
+        return !stat.size;
+    }
+    catch {
+        console.log('PKGBUILD doesn\'t exist. Assuming package is new.');
+        return true;
+    }
 }
 
 process.argv.forEach((arg, i) => {
@@ -198,22 +221,19 @@ if (JOB) {
                 START = null;
             }
             if (START === null) {
-                if (compare === null || compare.IsUpgradable(p)) {
+                if (compare === null || compare.IsUpgradable(p) || await isNewPackage(directory, p)) {
                     console.log((new Date()).toLocaleTimeString() + clc.magentaBright(` Package ${i}/${job.packages.length}`));
-                    if (verifyJenkins) {
-                        while (true) {
-                            try {
-                                lastHash = (await gitea.getStatus(PACKAGE_ORG, p)).sha
-                                break;
-                            }
-                            catch {
-                                console.log(clc.red(`Failed to get status of ${p}. Retrying...`));
-                                await snooze(30000);
-                            }
+                    while (verifyJenkins) {
+                        try {
+                            lastHash = (await gitea.getStatus(PACKAGE_ORG, p)).sha
+                            console.log(`current sha: ${lastHash}`);
+                            break;
                         }
-                        console.log(`current sha: ${lastHash}`);
+                        catch {
+                            console.log(clc.red(`Failed to get status of ${p}. Retrying...`));
+                            await snooze(30000);
+                        }
                     }
-                    await refreshGpg(job);
                     console.log(clc.yellowBright(`Pushing ${p} ...`));
                     if (job.source == 'trunk') {
                         if (inc) {
@@ -222,10 +242,12 @@ if (JOB) {
                         else {
                             await runCommand('pimport', [p]);
                         }
+                        await refreshGpg(job);
                         await runCommand('artixpkg', ['repo', 'add', '-p', repo, p]);
                     }
                     else {
                         try {
+                            await refreshGpg(job);
                             await runCommand('artixpkg', ['repo', 'move', '-p', job.source, repo, p]);
                         }
                         catch {
