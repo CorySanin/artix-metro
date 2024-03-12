@@ -9,6 +9,8 @@ This program makes use of my [pimport](https://gitea.artixlinux.org/corysanin/ar
 `artix-checkupdates` is also required. I highly recommend configuring it to use the developer artix repo.
 It uses `artix-checkupdates` to retrieve a list of packages that actually do have updates pending. packy-pusher will skip packages that don't need to be updated.
 
+Install node dependencies with `npm install`
+
 ## Config
 
 Please see [example.json5](jobs/example.json5). Program can parse json5 or plain json.

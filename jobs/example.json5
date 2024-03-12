@@ -9,7 +9,7 @@
     // The destination repo
     "repo": "world-gremlins",
     // The location for all the package repositories on your system
-    "directory": "/home/cory/Documents/pkg/artixlinux/desktop",
+    "directory": "/home/cory/Documents/pkg/artixlinux",
     // (experimental) if set to true (and source is "trunk"),
     // package won't import from upstream and will instead do a .1 pkgrel bump on all packages.
     // Useful if packages were mistakenly built out of order.
