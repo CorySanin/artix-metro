@@ -111,10 +111,18 @@ async function refreshGpg(config) {
     if (currentTime.getTime() - LASTSIGNTIME.getTime() > SIGNATUREEXPIRY) {
         console.log(clc.cyan('Refreshing signature...'));
         await runCommand('touch', ['signfile']);
-        await runCommand('gpg', ['-a', '--passphrase', config.gpgpass, '--batch', '--pinentry-mode', 'loopback', '--detach-sign', 'signfile']);
+        await runCommand('gpg', ['-a', '--passphrase', escapeCommandParam(config.gpgpass), '--batch', '--pinentry-mode', 'loopback', '--detach-sign', 'signfile']);
         await fsp.rm('signfile.asc');
         LASTSIGNTIME = currentTime;
     }
+}
+
+/**
+ * Formats text to be sent as a parameter to some command
+ * @param {string} param 
+ */
+function escapeCommandParam(param) {
+    return param.replace(/\\/g, "\\\\");
 }
 
 /**
@@ -240,7 +248,7 @@ if (JOB) {
                             await increment(directory, p);
                         }
                         else {
-                            await runCommand('pimport', [p]);
+                            await runCommand('artixpkg', ['repo', 'import', p]);
                         }
                         await refreshGpg(job);
                         await runCommand('artixpkg', ['repo', 'add', '-p', repo, p]);

@@ -4,9 +4,7 @@ Given a list of packages, build one at a time. Exits if a build fails.
 
 ## Setup
 
-This program makes use of my [pimport](https://gitea.artixlinux.org/corysanin/artix-patches/src/branch/master/pimport.sh) script. See [artix-patches](https://gitea.artixlinux.org/corysanin/artix-patches#artix-patches), particularly the "how to use" section.
-
-`artix-checkupdates` is also required. I highly recommend configuring it to use the developer artix repo.
+`artix-checkupdates` is required. I highly recommend configuring it to use the developer artix mirror.
 It uses `artix-checkupdates` to retrieve a list of packages that actually do have updates pending. packy-pusher will skip packages that don't need to be updated.
 
 Install node dependencies with `npm install`

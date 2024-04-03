@@ -4,7 +4,7 @@
         "token": "youReGiteAtoKeNhERe",
         "domain": "gitea.artixlinux.org"
     },
-    // use "trunk" to pimport and build. Or supply a repo name to move from that repo.
+    // use "trunk" to import and build. Or supply a repo name to move from that repo.
     "source": "trunk",
     // The destination repo
     "repo": "world-gremlins",
