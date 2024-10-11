@@ -15,48 +15,51 @@ class Checkupdates {
     FetchUpgradable(timeout = TimeOut) {
         return new Promise((resolve, reject) => {
             this.upgradable = [];
-            let linestart = 0;
-            let child = spawn('artix-checkupdates', ['-u']);
-
-
-            let to = setTimeout(() => {
+            let process = spawn('artix-checkupdates', ['-u']);
+            let to = setTimeout(async () => {
+                process.kill() && await cleanUpLockfiles();
                 reject('Timed out');
-                child.kill();
             }, timeout);
-
-            child.stdout.setEncoding('utf8');
-            child.stdout.on('data', data => {
-                let lines = data.toString().split('\n');
-                for (let i = 0; i < lines.length; i++) {
-                    let line = lines[i];
-                    if (linestart === -1) {
-                        linestart = line.indexOf('Package basename');
-                    }
-                    else {
-                        line = this.ParseLine(line, linestart);
-                        if (line[0] !== 'Package' && line[0].length > 0) {
-                            this.upgradable.push(line[0]);
-                        }
-                    }
-                }
+            let outputstr = '';
+            let errorOutput = '';
+            process.stdout.on('data', data => {
+                outputstr += data.toString();
             });
-
-            child.on('exit', code => {
-                this.upgradable.forEach(pkg => console.log(clc.blue(pkg)));
+            process.stderr.on('data', err => {
+                const errstr = err.toString();
+                errorOutput += `${errstr}, `;
+                console.error(errstr);
+            })
+            process.on('exit', async (code) => {
                 clearTimeout(to);
-                resolve(code);
+                if (code !== 0 || errorOutput.length !== 0) {
+                    errorOutput.includes('unable to lock database') && cleanUpLockfiles();
+                    reject((code && `exited with ${code}`) || errorOutput);
+                }
+                else {
+                    this.upgradable = this.parseCheckUpdatesOutput(outputstr);
+                    this.upgradable.forEach(pkg => console.log(clc.blue(pkg)));
+                    resolve(code);
+                }
             });
         });
     }
 
     /**
-     * Returns the first element from the line of a table
-     * @param {*} str The line to parse
-     * @param {*} linestart the amount of indentation
-     * @returns 
+     * parse output of checkupdates
+     * @param {*} output output of artix-checkupdates
+     * @returns an array of package names from the checkupdates output
      */
-    ParseLine(str, linestart = 0) {
-        return str.substring(linestart).trim().replace(ExtraSpace, ' ').split(' ');
+    parseCheckUpdatesOutput(output) {
+        let packages = [];
+        let lines = output.split('\n');
+        lines.forEach(l => {
+            let p = l.trim().replace(ExtraSpace, ' ');
+            if (p.length > 0 && p.indexOf('Package basename') < 0) {
+                packages.push(p.split(' ', 2)[0]);
+            }
+        });
+        return packages;
     }
 
     /**

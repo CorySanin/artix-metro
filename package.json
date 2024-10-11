@@ -1,16 +1,13 @@
 {
   "name": "packagepusher",
-  "version": "2.1.1",
+  "version": "2.1.2",
   "description": "Automate pushing packages to Artix",
   "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "author": "",
+  "author": "Cory Sanin",
   "license": "MIT",
   "dependencies": {
     "cli-color": "2.0.4",
     "json5": "2.2.3",
-    "phin": "3.7.0"
+    "phin": "3.7.1"
   }
 }
