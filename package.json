@@ -1,13 +1,44 @@
 {
-  "name": "packagepusher",
-  "version": "2.1.2",
+  "name": "artix-metro",
+  "version": "3.0.0",
   "description": "Automate pushing packages to Artix",
-  "main": "index.js",
-  "author": "Cory Sanin",
+  "keywords": [
+    "artix",
+    "artixlinux"
+  ],
+  "type": "module",
+  "main": "distribution/index.mjs",
+  "bin": {
+    "artix-metro": "./bin/artix-metro.mjs"
+  },
+  "files": [
+    "distribution",
+    "bin"
+  ],
+  "author": {
+    "name": "Cory Sanin",
+    "email": "corysanin@artixlinux.org",
+    "url": "https://sanin.dev"
+  },
+  "homepage": "https://gitea.artixlinux.org/corysanin/artix-metro",
+  "bugs": {
+    "url": "https://github.com/CorySanin/artix-metro/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://gitea.artixlinux.org/corysanin/artix-metro.git"
+  },
   "license": "MIT",
   "dependencies": {
+    "artix-checkupdates": "1.0.1",
     "cli-color": "2.0.4",
-    "json5": "2.2.3",
-    "phin": "3.7.1"
+    "ky": "1.7.4",
+    "json5": "2.2.3"
+  },
+  "devDependencies": {
+    "typescript": "5.7.3",
+    "@sindresorhus/tsconfig": "7.0.0",
+    "@types/cli-color": "2.0.6",
+    "@types/node": "22.10.7"
   }
 }

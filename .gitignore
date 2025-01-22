@@ -97,5 +97,7 @@ public
 # DynamoDB Local files
 .dynamodb/
 
+distribution/*.mts
+distribution/*.mjs
 jobs/*
 !jobs/example.json5

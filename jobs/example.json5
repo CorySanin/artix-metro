@@ -1,15 +1,8 @@
 {
-    // The Gitea API is used to tell when a package builds successfully.
-    "gitea": {
-        "token": "youReGiteAtoKeNhERe",
-        "domain": "gitea.artixlinux.org"
-    },
-    // use "trunk" to import and build. Or supply a repo name to move from that repo.
-    "source": "trunk",
+    // set source to move packages, or leave it undefined to upgrade packages
+    "source": null,
     // The destination repo
     "repo": "world-gremlins",
-    // The location for all the package repositories on your system
-    "directory": "/home/cory/Documents/pkg/artixlinux",
     // (experimental) if set to true (and source is "trunk"),
     // package won't import from upstream and will instead do a .1 pkgrel bump on all packages.
     // Useful if packages were mistakenly built out of order.
