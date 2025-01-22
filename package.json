@@ -1,13 +1,27 @@
 {
   "name": "packagepusher",
-  "version": "2.1.2",
+  "version": "3.0.0",
   "description": "Automate pushing packages to Artix",
-  "main": "index.js",
-  "author": "Cory Sanin",
+  "type": "module",
+  "main": "distribution/index.mjs",
+  "bin": {
+    "artix-packy-pusher": "./bin/artix-packy-pusher.mjs"
+  },
+  "author": {
+    "name": "Cory Sanin",
+    "email": "corysanin@artixlinux.org",
+    "url": "https://sanin.dev"
+  },
   "license": "MIT",
   "dependencies": {
+    "artix-checkupdates": "1.0.1",
     "cli-color": "2.0.4",
-    "json5": "2.2.3",
-    "phin": "3.7.1"
+    "ky": "1.7.4",
+    "json5": "2.2.3"
+  },
+  "devDependencies": {
+    "@sindresorhus/tsconfig": "7.0.0",
+    "@types/cli-color": "2.0.6",
+    "@types/node": "22.10.7"
   }
 }
