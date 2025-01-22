@@ -34,7 +34,7 @@ async function getGpgPass() {
     return password;
 }
 
-async function artixPackyPusher() {
+async function artixMetro() {
     let job: Partial<Job> = {
         increment: false,
         packages: []
@@ -104,7 +104,7 @@ async function artixPackyPusher() {
 
         if (helpFlag || (!jobfile && !job.repo)) {
             console.log([
-                `\nUsage: artix-packy-pusher [OPTIONS] [commands]...`,
+                `\nUsage: artix-metro [OPTIONS] [commands]...`,
                 'works similarly to "artixpkg repo"... but with a few tricks!',
                 'All package operations check if the package appears in the appropriate artix-checkupdate output.',
                 'Build operations don\'t proceed until the previous build succeeds. Halts on failed build.\n',
@@ -153,5 +153,5 @@ async function artixPackyPusher() {
     }
 }
 
-export default artixPackyPusher;
-export { artixPackyPusher };
+export default artixMetro;
+export { artixMetro };

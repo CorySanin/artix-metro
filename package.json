@@ -1,11 +1,11 @@
 {
-  "name": "packagepusher",
+  "name": "artix-metro",
   "version": "3.0.0",
   "description": "Automate pushing packages to Artix",
   "type": "module",
   "main": "distribution/index.mjs",
   "bin": {
-    "artix-packy-pusher": "./bin/artix-packy-pusher.mjs"
+    "artix-metro": "./bin/artix-metro.mjs"
   },
   "author": {
     "name": "Cory Sanin",
@@ -20,6 +20,7 @@
     "json5": "2.2.3"
   },
   "devDependencies": {
+    "typescript": "5.7.3",
     "@sindresorhus/tsconfig": "7.0.0",
     "@types/cli-color": "2.0.6",
     "@types/node": "22.10.7"
