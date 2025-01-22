@@ -143,6 +143,8 @@ async function artixMetro() {
         gpgpass: process.env['GPGPASS'] || (await getGpgPass()) || ''
     });
 
+    console.log('artix-metro\nCory Sanin\n');
+
     try {
         await pusher.runJob(job as Job);
     }

@@ -2,15 +2,31 @@
   "name": "artix-metro",
   "version": "3.0.0",
   "description": "Automate pushing packages to Artix",
+  "keywords": [
+    "artix",
+    "artixlinux"
+  ],
   "type": "module",
   "main": "distribution/index.mjs",
   "bin": {
     "artix-metro": "./bin/artix-metro.mjs"
   },
+  "files": [
+    "distribution",
+    "bin"
+  ],
   "author": {
     "name": "Cory Sanin",
     "email": "corysanin@artixlinux.org",
     "url": "https://sanin.dev"
+  },
+  "homepage": "https://gitea.artixlinux.org/corysanin/artix-metro",
+  "bugs": {
+    "url": "https://github.com/CorySanin/artix-metro/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://gitea.artixlinux.org/corysanin/artix-metro.git"
   },
   "license": "MIT",
   "dependencies": {
