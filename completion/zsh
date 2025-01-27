@@ -1,0 +1,61 @@
+# Load necessary library files
+LIBDIR=${LIBDIR:-'/usr/share/artools/lib'}
+
+_artix_metro_completion() {
+    local -a metroCommon repos autorepos pkgbase
+    local curcontext="$curcontext" state
+
+    # Load external configurations
+    source "${LIBDIR}/pkg/db/db.sh" 2>/dev/null
+
+    # Common options
+    metroCommon=("-h" "--help" "--start" "--token" "--workspace" "--increment" "-j" "--job")
+
+    # Populate variables
+    repos=("${(s: :)ARTIX_DB}")
+    autorepos=("${(s: :)ARTIX_DB_MAP}")
+    pkgbase=("package") # TODO: populate cloned packages
+
+    # Handle command and argument contexts
+    _arguments -C \
+        '--token[Provide a token]: ' \
+        '-j[Specify a job]: :_files' \
+        '--job[Specify a job]: :_files' \
+        '--workspace[Specify a workspace]: :_files -/' \
+        '--start[Start a process]:pkgbase:(${pkgbase})' \
+        '1:command:(${metroCommon} add move)' \
+        '2:repo:(${metroCommon} ${autorepos} ${repos})' \
+        '*:pkgbase:->pkgbase'
+
+    # Contextual argument handling
+    case $state in
+        pkgbase)
+            case $words[2] in
+                add)
+                    if (( CURRENT == 3 )); then
+                        # First argument after "add" is a repo
+                        _values "repo" "${metroCommon[@]}" "${autorepos[@]}" "${repos[@]}"
+                    else
+                        # Remaining arguments are pkgbase
+                        _values "pkgbase" "${pkgbase[@]}"
+                    fi
+                    ;;
+                move)
+                    if (( CURRENT == 3 )); then
+                        # First repo for "move"
+                        _values "repo" "${metroCommon[@]}" "${autorepos[@]}" "${repos[@]}"
+                    elif (( CURRENT == 4 )); then
+                        # Second repo for "move"
+                        _values "repo" "${metroCommon[@]}" "${autorepos[@]}" "${repos[@]}"
+                    else
+                        # Remaining arguments are pkgbase
+                        _values "pkgbase" "${pkgbase[@]}"
+                    fi
+                    ;;
+            esac
+            ;;
+    esac
+}
+
+# Register the completion function for artix-metro
+compdef _artix_metro_completion artix-metro

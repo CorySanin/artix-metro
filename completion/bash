@@ -1,0 +1,99 @@
+#/usr/bin/env bash
+
+LIBDIR=${LIBDIR:-'/usr/share/artools/lib'}
+
+_artixpkg_pkgbase() {
+    source "${LIBDIR}"/pkg/git/config.sh
+    source "${LIBDIR}"/pkg/util.sh
+    ls -1 "${TREE_DIR_ARTIX}" | tr '\n' ' '
+}
+
+_artix_metro_completion() {
+    local cur prev comps repos autorepos comp_cword_exflag
+    source "${LIBDIR}"/pkg/db/db.sh 2>/dev/null
+
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    prev="${COMP_WORDS[COMP_CWORD-1]}"
+
+    for ((i = COMP_CWORD - 1; i >= 0; i--)); do
+        if [[ ${COMP_WORDS[i]} != -* ]]; then
+            last_non_flag_word="${COMP_WORDS[i]}"
+            break
+        fi
+    done
+
+    comps=""
+    comp_cword_exflag=0
+    comp_cword_all=0
+    for ((i = 0; i < ${#COMP_WORDS[@]} - 1; i++)); do
+        word="${COMP_WORDS[i]}"
+        comps_all+=" $word"
+        ((comp_cword_all++))
+        if [[ $word != -* ]]; then
+            comps+=" $word"
+            ((comp_cword_exflag++))
+        fi
+    done
+    comps="${comps:1}"
+
+    repos=""
+    for word in "${ARTIX_DB[@]}"; do
+        if [[ $word != -* ]]; then
+            repos+=" $word"
+        fi
+    done
+    repos="${repos:1}"
+    autorepos=""
+    for word in "${ARTIX_DB_MAP[@]}"; do
+        if [[ $word != -* ]]; then
+            autorepos+=" $word"
+        fi
+    done
+    autorepos="${autorepos:1}"
+
+    case "${prev}" in
+        "--token")
+            # this flag expects a parameter
+            COMPREPLY=()
+            ;;
+        "-j"|"--job")
+            COMPREPLY=( $(compgen -f -- "$cur") )
+            ;;
+        "--workspace")
+            COMPREPLY=( $(compgen -d -- "$cur") )
+            ;;
+        "--start")
+            COMPREPLY=($(compgen -W "$(_artixpkg_pkgbase)" -- ${cur}))
+            ;;
+        *)
+            local metroCommon="-h --help --start --token --workspace --increment "
+            case "${comps}" in
+                "artix-metro add"*)
+                    case "${comp_cword_exflag}" in
+                        2)
+                            COMPREPLY=($(compgen -W "$metroCommon $autorepos $repos" -- ${cur}))
+                            ;;
+                        *)
+                            COMPREPLY=($(compgen -W "$metroCommon $(_artixpkg_pkgbase)" -- ${cur}))
+                            ;;
+                    esac
+                    ;;
+                "artix-metro move"*)
+                    case "${comp_cword_exflag}" in
+                        2|3)
+                            COMPREPLY=($(compgen -W "$metroCommon $autorepos $repos" -- ${cur}))
+                            ;;
+                        *)
+                            COMPREPLY=($(compgen -W "$metroCommon $(_artixpkg_pkgbase)" -- ${cur}))
+                            ;;
+                    esac
+                    ;;
+                *)
+                    COMPREPLY=($(compgen -W "$metroCommon -j --job add move" -- ${cur}))
+                    ;;
+            esac
+            ;;
+    esac
+}
+
+complete -F _artix_metro_completion artix-metro
