@@ -4,11 +4,11 @@ import * as readline from 'node:readline/promises';
 import clc from 'cli-color';
 import path from 'node:path';
 import os from 'node:os';
-import { spawn } from 'node:child_process';
 import { Checkupdates } from 'artix-checkupdates';
 import { Gitea } from './gitea.mjs'
 import { ArtoolsConfReader, DefaultConf } from './artoolsconf.mjs';
 import { snooze } from './snooze.mjs';
+import { runCommand, isPasswordRequired } from './runCommand.mjs';
 import type { ArtixRepo } from 'artix-checkupdates';
 import type { ArtoolsConf } from './artoolsconf.mts';
 
@@ -26,21 +26,7 @@ interface Job extends Partial<ArtoolsConf> {
 }
 
 const PACKAGE_ORG = 'packages';
-const SIGNATUREEXPIRY = 30000;//in ms
 const SIGNFILE = path.join(os.tmpdir(), 'signfile');
-
-/**
- * Run a command (as a promise).
- * @param command command to run
- * @param args args to pass
- * @returns true if success
- */
-function runCommand(command: string, args: string[] = []): Promise<boolean> {
-    return new Promise((res, _) => {
-        let proc = spawn(command, args, { stdio: ['ignore', process.stdout, process.stderr] });
-        proc.on('exit', code => res(code === 0));
-    });
-}
 
 /**
  * Formats text to be sent as a parameter to some command
@@ -54,15 +40,16 @@ function escapeCommandParam(param: string) {
 
 class Pusher {
     private _gitea: Gitea | null;
-    private _lastSign: number = 0;
     private _config: PusherConfig;
     private _artools: ArtoolsConf;
     private _constructed: Promise<void>;
+    private _createdSignfile: boolean;
 
     constructor(config: PusherConfig = {}) {
         this._gitea = null;
         this._artools = DefaultConf
         this._config = config;
+        this._createdSignfile = false;
         this._constructed = (async () => {
             try {
                 this._artools = await (new ArtoolsConfReader()).readConf();
@@ -78,13 +65,11 @@ class Pusher {
     }
 
     async refreshGpg() {
-        let currentTime = (new Date()).getTime();
-        if (this._config.gpgpass && currentTime - this._lastSign > SIGNATUREEXPIRY) {
+        if (await isPasswordRequired()) {
             console.log(clc.cyan('Refreshing signature...'));
-            await runCommand('touch', [SIGNFILE]);
-            await runCommand('gpg', ['-a', '--passphrase', escapeCommandParam(this._config.gpgpass), '--batch', '--pinentry-mode', 'loopback', '--detach-sign', SIGNFILE]);
+            this._createdSignfile ||= await runCommand('touch', [SIGNFILE]);
+            await runCommand('gpg', ['-a', '--passphrase', escapeCommandParam(this._config.gpgpass || ''), '--batch', '--pinentry-mode', 'loopback', '--detach-sign', SIGNFILE]);
             await fsp.rm(`${SIGNFILE}.asc`);
-            this._lastSign = currentTime;
         }
     }
 
@@ -214,11 +199,13 @@ class Pusher {
             }
         }
         console.log(clc.greenBright('SUCCESS: All packages built'));
-        try {
-            await fsp.rm(SIGNFILE);
-        }
-        catch {
-            console.error(clc.red('failed to remove temp signfile'));
+        if (this._createdSignfile) {
+            try {
+                await fsp.rm(SIGNFILE);
+            }
+            catch {
+                console.error(clc.red('failed to remove temp signfile'));
+            }
         }
     }
 }

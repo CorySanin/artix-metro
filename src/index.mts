@@ -4,6 +4,7 @@ import clc from 'cli-color';
 import JSON5 from 'json5';
 import { Writable } from 'stream';
 import { Pusher } from './pusher.mjs';
+import { isPasswordRequired } from './runCommand.mjs';
 import type { Job, ArtixpkgRepo } from './pusher.mts';
 
 /**
@@ -11,6 +12,9 @@ import type { Job, ArtixpkgRepo } from './pusher.mts';
  * @returns a promise that resolves the password
  */
 async function getGpgPass() {
+    if ((process.env['SKIPGPGPASSPROMPT'] || '').toLowerCase() === 'true') {
+        return 'SKIP';
+    }
     let muted = false;
     let mutableStdout = new Writable({
         write: function (chunk, encoding, callback) {
@@ -20,6 +24,11 @@ async function getGpgPass() {
             callback();
         }
     });
+    if (! await isPasswordRequired()) {
+        console.log(clc.green('Looks like GPG agent is currently running and password is cached. '
+            + 'If there is no timeout on your cached password, you can simply press enter.\n'
+            + 'To skip this GPG password prompt next time, set $SKIPGPGPASSPROMPT to true'));
+    }
     let rl = readline.createInterface({
         input: process.stdin,
         output: mutableStdout,

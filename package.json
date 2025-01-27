@@ -1,6 +1,6 @@
 {
   "name": "artix-metro",
-  "version": "3.0.0",
+  "version": "3.0.1",
   "description": "Automate pushing packages to Artix",
   "keywords": [
     "artix",
@@ -13,7 +13,8 @@
   },
   "files": [
     "distribution",
-    "bin"
+    "bin",
+    "completion"
   ],
   "author": {
     "name": "Cory Sanin",
