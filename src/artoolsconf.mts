@@ -30,14 +30,16 @@ function removeQuotes(str: string) {
 
 class ArtoolsConfReader {
 
-    async readConf(): Promise<ArtoolsConf> {
+    async readConf(silent: boolean = false): Promise<ArtoolsConf> {
         const primaryLocation = path.join(os.homedir(), '.config', 'artools', 'artools-pkg.conf');
         const systemConf = path.join('/', 'etc', 'artools', 'artools-pkg.conf');
         try {
             return await this.readConfFile(primaryLocation);
         }
         catch (ex) {
-            console.error(`artools config at "${primaryLocation}" could not be read. ${ex}\nUsing system config "${systemConf}" instead.`);
+            if (!silent) {
+                console.error(`artools config at "${primaryLocation}" could not be read. ${ex}\nUsing system config "${systemConf}" instead.`);
+            }
             return await this.readConfFile(systemConf);
         }
     }

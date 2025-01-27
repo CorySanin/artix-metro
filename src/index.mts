@@ -1,10 +1,12 @@
 import * as fsp from 'node:fs/promises';
 import * as readline from 'node:readline/promises';
+import path from 'node:path';
 import clc from 'cli-color';
 import JSON5 from 'json5';
 import { Writable } from 'stream';
 import { Pusher } from './pusher.mjs';
 import { isPasswordRequired } from './runCommand.mjs';
+import { ArtoolsConfReader } from './artoolsconf.mjs';
 import type { Job, ArtixpkgRepo } from './pusher.mts';
 
 /**
@@ -44,6 +46,7 @@ async function getGpgPass() {
 }
 
 async function artixMetro() {
+    let completion: boolean = false;
     let job: Partial<Job> = {
         increment: false,
         packages: []
@@ -64,6 +67,29 @@ async function artixMetro() {
             const iPlus = i + 1;
             const args = process.argv;
             switch (true) {
+                case (arg === '--completion') && iPlus < args.length:
+                    const comm = args[iPlus] as string;
+                    completion = skipOne = true;
+                    switch (comm) {
+                        case ('pkgbase'):
+                            (new ArtoolsConfReader()).readConf(true).then(async (conf) => {
+                                try {
+                                    console.log(
+                                        (await fsp.readdir(path.join(conf.workspace, 'artixlinux'), { withFileTypes: true }))
+                                            .filter(dirent => dirent.isDirectory())
+                                            .map(dirent => dirent.name).join(' '));
+                                    process.exit(0);
+                                }
+                                catch {
+                                    process.exit(1);
+                                }
+                            })
+                            break;
+                        default:
+                            console.error(`command "${comm}" not recognized`)
+                            break;
+                    }
+                    break;
                 case (arg === '--job' || arg === '-j') && iPlus < args.length:
                     if (jobfile) {
                         console.error(`multiple jobfiles provided. aborting.`);
@@ -111,6 +137,10 @@ async function artixMetro() {
             }
         });
 
+        if (completion) {
+            return;
+        }
+
         if (helpFlag || (!jobfile && !job.repo)) {
             console.log([
                 `\nUsage: artix-metro [OPTIONS] [commands]...`,
@@ -147,6 +177,10 @@ async function artixMetro() {
             job.packages.splice(0, startPos < 0 ? job.packages.length : startPos)
         }
     })();
+
+    if (completion) {
+        return;
+    }
 
     let pusher = new Pusher({
         gpgpass: process.env['GPGPASS'] || (await getGpgPass()) || ''

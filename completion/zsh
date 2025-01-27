@@ -14,7 +14,7 @@ _artix_metro_completion() {
     # Populate variables
     repos=("${(s: :)ARTIX_DB}")
     autorepos=("${(s: :)ARTIX_DB_MAP}")
-    pkgbase=("package") # TODO: populate cloned packages
+    pkgbase=("${(s: :)$(artix-metro --completion pkgbase)}")
 
     # Handle command and argument contexts
     _arguments -C \
