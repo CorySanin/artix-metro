@@ -6,7 +6,7 @@ import path from 'node:path';
 import os from 'node:os';
 import { Checkupdates } from 'artix-checkupdates';
 import { Gitea } from './gitea.mjs'
-import { ArtoolsConfReader, DefaultConf } from './artoolsconf.mjs';
+import { DefaultConf } from './artoolsconf.mjs';
 import { snooze } from './snooze.mjs';
 import { runCommand, isPasswordRequired } from './runCommand.mjs';
 import type { ArtixRepo } from 'artix-checkupdates';
@@ -42,26 +42,16 @@ class Pusher {
     private _gitea: Gitea | null;
     private _config: PusherConfig;
     private _artools: ArtoolsConf;
-    private _constructed: Promise<void>;
     private _createdSignfile: boolean;
 
-    constructor(config: PusherConfig = {}) {
+    constructor(config: PusherConfig = {}, artoolsConf: ArtoolsConf = DefaultConf) {
         this._gitea = null;
-        this._artools = DefaultConf
+        this._artools = artoolsConf;
         this._config = config;
         this._createdSignfile = false;
-        this._constructed = (async () => {
-            try {
-                this._artools = await (new ArtoolsConfReader()).readConf();
-                this._gitea = new Gitea({
-                    token: this._artools.giteaToken || ''
-                });
-            }
-            catch (ex) {
-                this._artools = DefaultConf
-                console.error(ex);
-            }
-        })();
+        this._gitea = new Gitea({
+            token: this._artools.giteaToken || ''
+        });
     }
 
     async refreshGpg() {
@@ -126,7 +116,6 @@ class Pusher {
     }
 
     async runJob(job: Job) {
-        await this._constructed;
         const checkupdates = new Checkupdates();
         const gitea = this._gitea as Gitea;
 

@@ -1,6 +1,6 @@
 {
   "name": "artix-metro",
-  "version": "3.0.2",
+  "version": "3.1.0",
   "description": "Automate pushing packages to Artix",
   "keywords": [
     "artix",
@@ -34,7 +34,8 @@
     "artix-checkupdates": "1.0.1",
     "cli-color": "2.0.4",
     "ky": "1.7.4",
-    "json5": "2.2.3"
+    "json5": "2.2.3",
+    "glob": "11.0.1"
   },
   "devDependencies": {
     "typescript": "5.7.3",

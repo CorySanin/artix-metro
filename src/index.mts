@@ -4,10 +4,12 @@ import path from 'node:path';
 import clc from 'cli-color';
 import JSON5 from 'json5';
 import { Writable } from 'stream';
+import { glob } from 'glob'
 import { Pusher } from './pusher.mjs';
 import { isPasswordRequired } from './runCommand.mjs';
-import { ArtoolsConfReader } from './artoolsconf.mjs';
+import { ArtoolsConfReader, DefaultConf } from './artoolsconf.mjs';
 import type { Job, ArtixpkgRepo } from './pusher.mts';
+import type { ArtoolsConf } from './artoolsconf.mts';
 
 /**
  * Prompts the user to input their GPG password via stdin
@@ -45,7 +47,15 @@ async function getGpgPass() {
     return password;
 }
 
+async function expandGlob(workspace: string, globby: string): Promise<string[]> {
+    return (await glob(path.join(globby, 'README.md'), {
+        cwd: path.join(workspace, 'artixlinux'),
+        maxDepth: 2
+    })).map(p => path.dirname(p));
+}
+
 async function artixMetro() {
+    let artoolsConf: ArtoolsConf = DefaultConf;
     let completion: boolean = false;
     let job: Partial<Job> = {
         increment: false,
@@ -161,6 +171,13 @@ async function artixMetro() {
             process.exit(0);
         }
 
+        try {
+            artoolsConf = await (new ArtoolsConfReader()).readConf();
+        }
+        catch (ex) {
+            console.error(ex);
+        }
+
         if (jobfile) {
             try {
                 job = JSON5.parse((await fsp.readFile(jobfile)).toString());
@@ -170,6 +187,13 @@ async function artixMetro() {
                 console.error(ex);
                 process.exit(4);
             }
+        }
+        else if (job.packages) {
+            const expanded: string[] = [];
+            for (let i = 0; i < (job.packages.length || 0); i++) {
+                (await expandGlob(artoolsConf.workspace, job.packages[i] as string)).forEach(p => expanded.push(p));
+            }
+            job.packages = expanded;
         }
 
         if (startPkg && job.packages) {
@@ -182,11 +206,11 @@ async function artixMetro() {
         return;
     }
 
+    console.log('artix-metro - Developed by Cory Sanin\n');
+
     let pusher = new Pusher({
         gpgpass: process.env['GPGPASS'] || (await getGpgPass()) || ''
-    });
-
-    console.log('artix-metro\nCory Sanin\n');
+    }, artoolsConf);
 
     try {
         await pusher.runJob(job as Job);
@@ -199,4 +223,4 @@ async function artixMetro() {
 }
 
 export default artixMetro;
-export { artixMetro };
+export { artixMetro, expandGlob };
