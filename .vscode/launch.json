@@ -5,16 +5,30 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "type": "pwa-node",
+            "type": "node",
             "request": "launch",
             "name": "Launch Program",
             "skipFiles": [
                 "<node_internals>/**"
             ],
             "env": {
-                "JOB": "jobs/example.json5"
+                "GPGPASS": "${input:gpgpass}"
             },
-            "program": "${workspaceFolder}/index.js"
+            "program": "${workspaceFolder}/bin/artix-metro.mjs",
+            "args": [
+                "--job",
+                "jobs/kde-01.json5"
+            ],
+            "outFiles": [
+                "${workspaceFolder}/distribution/*"
+            ]
         }
-    ]
+    ],
+    "inputs": [
+    {
+      "id": "gpgpass",
+      "type": "promptString",
+      "description": "Enter your GPG password"
+    }
+  ]
 }

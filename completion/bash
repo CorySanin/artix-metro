@@ -57,6 +57,7 @@ _artix_metro_completion() {
             COMPREPLY=()
             ;;
         "-j"|"--job")
+            compopt -o filenames
             COMPREPLY=( $(compgen -f -- "$cur") )
             ;;
         "--workspace")

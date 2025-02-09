@@ -1,7 +1,7 @@
 import ky from 'ky';
 import { snooze } from './snooze.mjs';
 
-type CiStatus = "pending" | "success" | "error" | "failure";
+type CiStatus = "pending" | "success" | "error" | "failure" | "";
 
 interface GiteaConfig {
     protocol?: string;
@@ -16,7 +16,12 @@ interface Commit {
 
 interface Status {
     sha: string;
-    state: CiStatus
+    state: CiStatus;
+}
+
+interface Hook {
+    active: boolean;
+    id: number;
 }
 
 class Gitea {
@@ -95,7 +100,43 @@ class Gitea {
         }
     }
 
+    async getHooks(...args: string[]): Promise<Hook[]> {
+        try {
+            let headers: HeadersInit = {};
+            if (this._token) {
+                headers['Authorization'] = `token ${this._token}`
+            }
+            const resp = await ky.get(`${this.getUrlPrefix()}/repos/${args.join('/')}/hooks`, {
+                headers
+            });
+            return await resp.json();
+        }
+        catch (err) {
+            throw err;
+        }
+    }
+
+    async sendTestWebhook(...args: string[]): Promise<void> {
+        try {
+            let headers: HeadersInit = {};
+            if (this._token) {
+                headers['Authorization'] = `token ${this._token}`
+            }
+            const hook = (await this.getHooks(...args)).find(hook => hook.active === true);
+            if (!hook) {
+                throw new Error('No active webhook found');
+            }
+            await ky.post(`${this.getUrlPrefix()}/repos/${args.join('/')}/hooks/${hook.id}/tests`, {
+                headers
+            });
+        }
+        catch (err) {
+            throw err;
+        }
+    }
+
     async waitForBuild(lastHash: string, ...args: string[]): Promise<void> {
+        let missingStatusCount = 0;
         while (true) {
             let status: Status | null;
             try {
@@ -108,7 +149,15 @@ class Gitea {
                 await snooze(30000);
                 continue;
             }
-            if (status.sha !== lastHash) {
+            if (!status.sha && !status.state) {
+                if (++missingStatusCount > 3) {
+                    console.log('No build info detected. Sending test webhook...');
+                    missingStatusCount = 0;
+                    await this.sendTestWebhook(...args);
+                }
+                await snooze(30000);
+            }
+            else if (status.sha !== lastHash) {
                 if (status.state === 'success') {
                     break;
                 }
