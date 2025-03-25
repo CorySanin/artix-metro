@@ -55,28 +55,20 @@ class Pusher {
     }
 
     async refreshGpg() {
-        if (await isPasswordRequired()) {
+        const sshSignMode = 'SSHKEYSIGN' in process.env;
+        if (sshSignMode || await isPasswordRequired()) {
             console.log(clc.cyan('Refreshing signature...'));
             this._createdSignfile ||= await runCommand('touch', [SIGNFILE]);
-            if ('SSHKEYSIGN' in process.env) 
-            {
-               await runCommand('ssh-keygen', [ '-Y',  'sign', '-f', path.resolve(process.env['SSHKEYSIGN'] as string), '-n', ' git', SIGNFILE]);
-	        }
-	        else
-		        {
-            	    await runCommand('gpg', ['-a', '--passphrase', escapeCommandParam(this._config.gpgpass || ''), '--batch', '--pinentry-mode', 'loopback', '--detach-sign', SIGNFILE]);
-		        }
-	    	if ('SSHKEYSIGN' in process.env) 
-		        {
-			        await fsp.rm(`${SIGNFILE}.sig`)
-	    	    }
-	    	else
-		        {
-            	    await fsp.rm(`${SIGNFILE}.asc`)
-		        }
+            if (sshSignMode) {
+                await runCommand('ssh-keygen', ['-Y', 'sign', '-f', path.resolve(process.env['SSHKEYSIGN'] as string), '-n', ' git', SIGNFILE]);
+            }
+            else {
+                await runCommand('gpg', ['-a', '--passphrase', escapeCommandParam(this._config.gpgpass || ''), '--batch', '--pinentry-mode', 'loopback', '--detach-sign', SIGNFILE]);
+            }
+            await fsp.rm(`${SIGNFILE}.${sshSignMode ? 'sig' : 'asc'}`)
         }
-	 }
-    
+    }
+
 
     increment(pkg: string): Promise<void> {
         return new Promise(async (res, _) => {
