@@ -3,7 +3,6 @@
 LIBDIR=${LIBDIR:-'/usr/share/artools/lib'}
 
 _artixpkg_pkgbase() {
-    source "${LIBDIR}"/pkg/git/config.sh
     source "${LIBDIR}"/pkg/util.sh
     ls -1 "${TREE_DIR_ARTIX}" | tr '\n' ' '
 }
