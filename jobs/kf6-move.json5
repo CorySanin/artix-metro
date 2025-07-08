@@ -1,5 +1,6 @@
 {
-    "repo": "gremlins",
+    "source": "gremlins",
+    "repo": "stable",
     "packages": [
         "extra-cmake-modules",
         "breeze-icons",
