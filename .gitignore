@@ -101,3 +101,5 @@ distribution/*.mts
 distribution/*.mjs
 jobs/*
 !jobs/example.json5
+!jobs/*-add.json*
+!jobs/*-move.json*

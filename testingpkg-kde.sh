@@ -1,8 +1,8 @@
 #!/bin/bash
 read -s -p "Enter your GPG password: " GPGPASS
 export GPGPASS
-node index.js --job jobs/kde-01.json5 \
-&& node index.js --job jobs/kde-02-push.json
+artix-metro --job jobs/kde-add.json5 \
+&& artix-metro --job jobs/kde-move.json5
 
 ./notify.sh
 GPGPASS=""
