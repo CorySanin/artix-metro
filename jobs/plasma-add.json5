@@ -4,6 +4,7 @@
     "packages": [
         "breeze-grub",
         "breeze-plymouth",
+        "layer-shell-qt",
         "discover",
         "flatpak-kcm",
         "kactivitymanagerd",
@@ -52,6 +53,9 @@
         "plasma-disks",
         "wacomtablet",
         "xdg-desktop-portal-kde",
+        "plasma-integration",
+        "kwin",
+        "kwin-x11",
         "plasma-workspace",
         "powerdevil",
         "plasma-vault",
