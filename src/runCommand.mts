@@ -1,5 +1,4 @@
-import { spawn } from 'node:child_process';
-import type { SpawnOptions } from 'node:child_process';
+import { spawn, type SpawnPromiseOptions } from 'spawn-but-with-promises';
 
 /**
  * Run a command (as a promise).
@@ -7,35 +6,29 @@ import type { SpawnOptions } from 'node:child_process';
  * @param args args to pass
  * @returns promise that yields true if success
  */
-function runCommand(command: string, args: string[] = [], stdOutToLogs: boolean = true): Promise<boolean> {
-    return new Promise((res, _) => {
-        const opts: SpawnOptions = {stdio: stdOutToLogs ? ['pipe', 'inherit', 'inherit'] : 'pipe'};
-        const proc = spawn(command, args, opts);
-        proc.on('exit', code => res(code === 0));
-    });
+async function runCommand(command: string, args: string[] = [], stdOutToLogs: boolean = true): Promise<boolean> {
+    const opts: SpawnPromiseOptions = { stdio: stdOutToLogs ? ['pipe', 'inherit', 'inherit'] : 'pipe' };
+    return await spawn(command, args, opts) === 0;
 }
 
 /**
  * Check if password input is necessary for signing
  * @returns promise that yieds true if password is required
  */
-function isPasswordRequired(): Promise<boolean> {
-    return new Promise(async (res, _) => {
-        if (! await runCommand('gpg-agent', [], false)) {
-            return res(true);
-        }
-        const proc = spawn('gpg-connect-agent', ['KEYINFO --list', '/bye'], { stdio: 'pipe' });
-        let outputstr = '';
-        proc.stdout.on('data', data => {
-            outputstr += data.toString();
-        });
-        proc.on('exit', async () => {
-            const keyinfo = outputstr.split('\n').filter(l => l.includes('KEYINFO'));
-            res(!keyinfo.find(l => {
-                const tokens = l.split(' ');
-                return tokens[0] === 'S' && tokens[1] === 'KEYINFO' && tokens[3] === 'D' && tokens[6] === '1';
-            }));
-        });
+async function isPasswordRequired(): Promise<boolean> {
+    if (! await runCommand('gpg-agent', [], false)) {
+        return true;
+    }
+    const proc = spawn('gpg-connect-agent', ['KEYINFO --list', '/bye'], { stdio: 'pipe' });
+    let outputstr = '';
+    proc.stdout.on('data', data => {
+        outputstr += data.toString();
+    });
+    await proc;
+    const keyinfo = outputstr.split('\n').filter(l => l.includes('KEYINFO'));
+    return !keyinfo.find(l => {
+        const tokens = l.split(' ');
+        return tokens[0] === 'S' && tokens[1] === 'KEYINFO' && tokens[3] === 'D' && tokens[6] === '1';
     });
 }
 
