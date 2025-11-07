@@ -12,13 +12,13 @@ import { runCommand, isPasswordRequired } from './runCommand.mjs';
 import type { ArtixRepo } from 'artix-checkupdates';
 import type { ArtoolsConf } from './artoolsconf.mts';
 
-interface PusherConfig {
+export interface PusherConfig {
     gpgpass?: string;
 }
 
-type ArtixpkgRepo = ArtixRepo | 'stable' | 'gremlins' | 'goblins';
+export type ArtixpkgRepo = ArtixRepo | 'stable' | 'gremlins' | 'goblins';
 
-interface Job extends Partial<ArtoolsConf> {
+export interface Job extends Partial<ArtoolsConf> {
     source?: ArtixpkgRepo;
     repo: ArtixpkgRepo;
     increment: boolean;
@@ -38,7 +38,7 @@ function escapeCommandParam(param: string) {
 
 
 
-class Pusher {
+export class Pusher {
     private _gitea: Gitea | null;
     private _config: PusherConfig;
     private _artools: ArtoolsConf;
@@ -207,5 +207,3 @@ class Pusher {
 }
 
 export default Pusher;
-export { Pusher };
-export type { PusherConfig, Job, ArtixpkgRepo };

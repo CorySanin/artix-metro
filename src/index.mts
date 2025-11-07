@@ -47,14 +47,14 @@ async function getGpgPass() {
     return password;
 }
 
-async function expandGlob(workspace: string, globby: string): Promise<string[]> {
+export async function expandGlob(workspace: string, globby: string): Promise<string[]> {
     return (await glob(path.join(globby, 'README.md'), {
         cwd: path.join(workspace, 'artixlinux'),
         maxDepth: 2
     })).map(p => path.dirname(p));
 }
 
-async function artixMetro() {
+export async function artixMetro() {
     let artoolsConf: ArtoolsConf = DefaultConf;
     let completion: boolean = false;
     let job: Partial<Job> = {
@@ -223,4 +223,3 @@ async function artixMetro() {
 }
 
 export default artixMetro;
-export { artixMetro, expandGlob };

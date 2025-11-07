@@ -1,20 +1,20 @@
 import ky from 'ky';
 import { snooze } from './snooze.mjs';
 
-type CiStatus = "pending" | "success" | "error" | "failure" | "";
+export type CiStatus = "pending" | "success" | "error" | "failure" | "";
 
-interface GiteaConfig {
+export interface GiteaConfig {
     protocol?: string;
     domain?: string;
     apiPrefix?: string;
     token?: string;
 }
 
-interface Commit {
+export interface Commit {
     sha: string;
 }
 
-interface Status {
+export interface Status {
     sha: string;
     state: CiStatus;
 }
@@ -24,7 +24,7 @@ interface Hook {
     id: number;
 }
 
-class Gitea {
+export class Gitea {
     private _protocol: string;
     private _domain: string;
     private _apiPrefix: string;
@@ -171,5 +171,3 @@ class Gitea {
 }
 
 export default Gitea;
-export { Gitea };
-export type { GiteaConfig, Commit, Status, CiStatus };

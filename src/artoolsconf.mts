@@ -3,12 +3,12 @@ import os from 'node:os';
 import path from 'node:path';
 import type { PathLike } from 'node:fs';
 
-interface ArtoolsConf {
+export interface ArtoolsConf {
     workspace: string;
     giteaToken: string | null;
 }
 
-const DefaultConf: ArtoolsConf = {
+export const DefaultConf: ArtoolsConf = {
     workspace: path.join(os.homedir(), 'artools-workspace'),
     giteaToken: null
 }
@@ -28,7 +28,7 @@ function removeQuotes(str: string) {
     return str;
 }
 
-class ArtoolsConfReader {
+export class ArtoolsConfReader {
 
     async readConf(silent: boolean = false): Promise<ArtoolsConf> {
         const primaryLocation = path.join(os.homedir(), '.config', 'artools', 'artools-pkg.conf');
@@ -66,5 +66,3 @@ class ArtoolsConfReader {
 }
 
 export default ArtoolsConfReader;
-export { ArtoolsConfReader, DefaultConf };
-export type { ArtoolsConf }

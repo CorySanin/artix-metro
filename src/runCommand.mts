@@ -6,8 +6,8 @@ import { spawn, type SpawnPromiseOptions } from 'spawn-but-with-promises';
  * @param args args to pass
  * @returns promise that yields true if success
  */
-async function runCommand(command: string, args: string[] = [], stdOutToLogs: boolean = true): Promise<boolean> {
-    const opts: SpawnPromiseOptions = { stdio: stdOutToLogs ? ['pipe', 'inherit', 'inherit'] : 'pipe' };
+export async function runCommand(command: string, args: string[] = [], stdOutToLogs: boolean = true): Promise<boolean> {
+    const opts: SpawnPromiseOptions = { stdio: stdOutToLogs ? ['pipe', 'inherit', 'inherit'] : 'pipe', rejectOnNonZero: true };
     return await spawn(command, args, opts) === 0;
 }
 
@@ -15,7 +15,7 @@ async function runCommand(command: string, args: string[] = [], stdOutToLogs: bo
  * Check if password input is necessary for signing
  * @returns promise that yieds true if password is required
  */
-async function isPasswordRequired(): Promise<boolean> {
+export async function isPasswordRequired(): Promise<boolean> {
     if (! await runCommand('gpg-agent', [], false)) {
         return true;
     }
@@ -33,4 +33,3 @@ async function isPasswordRequired(): Promise<boolean> {
 }
 
 export default runCommand;
-export { runCommand, isPasswordRequired };
