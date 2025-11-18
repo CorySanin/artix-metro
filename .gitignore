@@ -100,6 +100,6 @@ public
 distribution/*.mts
 distribution/*.mjs
 jobs/*
-!jobs/example.json5
+!jobs/example.jsonc
 !jobs/*-add.json*
 !jobs/*-move.json*
