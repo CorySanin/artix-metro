@@ -33,7 +33,7 @@
   "dependencies": {
     "artix-checkupdates": "1.1.0",
     "cli-color": "2.0.4",
-    "glob": "11.0.3",
+    "glob": "11.1.0",
     "json5": "2.2.3",
     "ky": "1.14.0",
     "spawn-but-with-promises": "^1.0.1"
