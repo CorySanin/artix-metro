@@ -59,6 +59,8 @@ export async function artixMetro() {
     let completion: boolean = false;
     let job: Partial<Job> = {
         increment: false,
+        nocheck: false,
+        rebuild: false,
         packages: []
     };
 
@@ -123,7 +125,13 @@ export async function artixMetro() {
                 case arg === '--increment':
                     job.increment = true;
                     break;
-                case arg === '-p':
+                case arg === '-n' || arg === '--nocheck':
+                    job.nocheck = true;
+                    break;
+                case arg === '-r' || arg === '--rebuild':
+                    job.rebuild = true;
+                    break;
+                case arg === '-p' || arg === '--push':
                     console.warn('-p option is implied.');
                     break;
                 case arg === '-h' || arg === '--help':
@@ -161,6 +169,8 @@ export async function artixMetro() {
                 '-j, --job <jobfile>\tread instructions from a job file. Overrides all other options except --start',
                 '--start <package>\tskips all packages before the provided package',
                 '--token <token>\t\tdefines the Gitea token to use for making calls to the Gitea API',
+                '-r, --rebuild\t\ttriggers a rebuild',
+                '-n, --nocheck\t\tdisable the check function',
                 '--workspace <path>\tdefines the artools workspace',
                 '--increment\t\tenable increment mode',
                 '-h, --help\t\tshows this help message\n',

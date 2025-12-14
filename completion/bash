@@ -66,15 +66,16 @@ _artix_metro_completion() {
             COMPREPLY=($(compgen -W "$(_artixpkg_pkgbase)" -- ${cur}))
             ;;
         *)
-            local metroCommon="-h --help --start --token --workspace --increment "
+            local metroCommon="-h --help --start --token --workspace"
+            local metroAdd="--increment -n --nocheck -r --rebuild"
             case "${comps}" in
                 "artix-metro add"*)
                     case "${comp_cword_exflag}" in
                         2)
-                            COMPREPLY=($(compgen -W "$metroCommon $autorepos $repos" -- ${cur}))
+                            COMPREPLY=($(compgen -W "$metroCommon $metroAdd $autorepos $repos" -- ${cur}))
                             ;;
                         *)
-                            COMPREPLY=($(compgen -W "$metroCommon $(_artixpkg_pkgbase)" -- ${cur}))
+                            COMPREPLY=($(compgen -W "$metroCommon $metroAdd $(_artixpkg_pkgbase)" -- ${cur}))
                             ;;
                     esac
                     ;;

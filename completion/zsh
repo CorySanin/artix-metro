@@ -9,7 +9,7 @@ _artix_metro_completion() {
     source "${LIBDIR}/pkg/db/db.sh" 2>/dev/null
 
     # Common options
-    metroCommon=("-h" "--help" "--start" "--token" "--workspace" "--increment" "-j" "--job")
+    metroCommon=("-h" "--help" "--start" "--token" "--workspace" "-j" "--job" "--increment" "-n" "--nocheck" "-r" "--rebuild")
 
     # Populate variables
     repos=("${(s: :)ARTIX_DB}")

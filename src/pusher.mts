@@ -22,6 +22,8 @@ export interface Job extends Partial<ArtoolsConf> {
     source?: ArtixpkgRepo;
     repo: ArtixpkgRepo;
     increment: boolean;
+    nocheck: boolean;
+    rebuild: boolean;
     packages: string[];
 }
 
@@ -180,7 +182,7 @@ export class Pusher {
                     await runCommand('artixpkg', ['repo', 'import', p]);
                 }
                 await this.refreshGpg();
-                await runCommand('artixpkg', ['repo', 'add', '-p', job.repo, p]);
+                await runCommand('artixpkg', createRepoAddArgs(job, p));
             }
             console.log(clc.blueBright(`${p} commit pushed`));
             if (!job.source) {
@@ -204,6 +206,18 @@ export class Pusher {
             }
         }
     }
+}
+
+function createRepoAddArgs(job: Job, packageName: string): string[] {
+    const args = ['repo', 'add', '-p'];
+    if (job.nocheck) {
+        args.push('--nocheck');
+    }
+    if (job.rebuild) {
+        args.push('--rebuild');
+    }
+    args.push(job.repo, packageName);
+    return args;
 }
 
 export default Pusher;
