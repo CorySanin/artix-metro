@@ -5,7 +5,8 @@ import clc from 'cli-color';
 import path from 'node:path';
 import os from 'node:os';
 import { Checkupdates } from 'artix-checkupdates';
-import { Gitea } from './gitea.mjs'
+import { Gitea } from './gitea.mjs';
+import { Gitlab, type Tag } from './gitlab.mjs';
 import { DefaultConf } from './artoolsconf.mjs';
 import { snooze } from './snooze.mjs';
 import { runCommand, isPasswordRequired } from './runCommand.mjs';
@@ -25,6 +26,7 @@ export interface Job extends Partial<ArtoolsConf> {
     nocheck: boolean;
     rebuild: boolean;
     packages: string[];
+    nextTag: boolean;
 }
 
 const PACKAGE_ORG = 'packages';
@@ -42,6 +44,7 @@ function escapeCommandParam(param: string) {
 
 export class Pusher {
     private _gitea: Gitea | null;
+    private _gitlab: Gitlab;
     private _config: PusherConfig;
     private _artools: ArtoolsConf;
     private _createdSignfile: boolean;
@@ -54,6 +57,7 @@ export class Pusher {
         this._gitea = new Gitea({
             token: this._artools.giteaToken || ''
         });
+        this._gitlab = new Gitlab()
     }
 
     async refreshGpg() {
@@ -124,6 +128,36 @@ export class Pusher {
         }
     }
 
+    async createRepoImportArgs(job: Job, packageName: string): Promise<string[]> {
+        const args = ['repo', 'import'];
+        if (job.nextTag !== false) {
+            const tags = (await this._gitlab.getPackageTags(packageName));
+            if (!tags || tags.length <= 0 || !tags[0]) {
+                throw new Error(`could not get upstream tags for ${packageName}`);
+            }
+            const current = (await this._gitea?.getTags(PACKAGE_ORG, packageName))?.[0];
+            if (!current) {
+                throw new Error(`could not get current tag for ${packageName}`);
+            }
+            const matchTag = getUpstreamTag(current.name);
+            let previousTag: null | Tag = null;
+            let chosenTag: null | Tag = null;
+            for(const tag of tags) {
+                if (tag.name === matchTag) {
+                    chosenTag = previousTag;
+                    break;
+                }
+                previousTag = tag;
+            }
+            if (!chosenTag) {
+                throw new Error(`could not determine next tag for ${packageName}`);
+            }
+            args.push('--tag', chosenTag.name);
+        }
+        args.push(packageName);
+        return args;
+    }
+
     async runJob(job: Job) {
         const checkupdates = new Checkupdates();
         const gitea = this._gitea as Gitea;
@@ -179,7 +213,7 @@ export class Pusher {
                     await this.increment(p);
                 }
                 else {
-                    await runCommand('artixpkg', ['repo', 'import', p]);
+                    await runCommand('artixpkg', await this.createRepoImportArgs(job, p));
                 }
                 await this.refreshGpg();
                 await runCommand('artixpkg', createRepoAddArgs(job, p));
@@ -206,6 +240,17 @@ export class Pusher {
             }
         }
     }
+}
+
+function getUpstreamTag(tag: string): string {
+    if (!tag) {
+        return tag;
+    }
+    const parts = tag.split('-') as string[];
+    const i = parts.length - 1;
+    const part: string = parts[i] || 'typescript sucks';
+    parts[i] = part.substring(0, part.indexOf('.')) || part;
+    return parts.join('-');
 }
 
 function createRepoAddArgs(job: Job, packageName: string): string[] {

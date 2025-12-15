@@ -14,6 +14,13 @@ export interface Commit {
     sha: string;
 }
 
+export interface Tag {
+    name: string;
+    message: string;
+    id: string;
+    commit: Commit;
+}
+
 export interface Status {
     sha: string;
     state: CiStatus;
@@ -53,7 +60,7 @@ export class Gitea {
 
     async getRepo(...args: string[]) {
         try {
-            let headers: HeadersInit = {};
+            const headers: HeadersInit = {};
             if (this._token) {
                 headers['Authorization'] = `token ${this._token}`
             }
@@ -67,13 +74,13 @@ export class Gitea {
         }
     }
 
-    async getCommits(...args: string[]): Promise<Commit[]> {
+    async getCommits(...args: string[]) {
         try {
-            let headers: HeadersInit = {};
+            const headers: HeadersInit = {};
             if (this._token) {
                 headers['Authorization'] = `token ${this._token}`
             }
-            const resp = await ky.get(`${this.getUrlPrefix()}/repos/${args.join('/')}/commits?limit=10`, {
+            const resp = await ky.get<Commit[]>(`${this.getUrlPrefix()}/repos/${args.join('/')}/commits?limit=10`, {
                 headers
             });
             return await resp.json();
@@ -83,14 +90,14 @@ export class Gitea {
         }
     }
 
-    async getStatus(...args: string[]): Promise<Status> {
+    async getStatus(...args: string[]) {
         try {
-            let commits = await this.getCommits(...args);
-            let headers: HeadersInit = {};
+            const commits = await this.getCommits(...args);
+            const headers: HeadersInit = {};
             if (this._token) {
                 headers['Authorization'] = `token ${this._token}`
             }
-            const resp = await ky.get(`${this.getUrlPrefix()}/repos/${args.join('/')}/commits/${commits[0]?.sha}/status`, {
+            const resp = await ky.get<Status>(`${this.getUrlPrefix()}/repos/${args.join('/')}/commits/${commits[0]?.sha}/status`, {
                 headers
             });
             return await resp.json();
@@ -100,13 +107,29 @@ export class Gitea {
         }
     }
 
-    async getHooks(...args: string[]): Promise<Hook[]> {
+    async getTags(...args: string[]) {
         try {
-            let headers: HeadersInit = {};
+            const headers: HeadersInit = {};
             if (this._token) {
                 headers['Authorization'] = `token ${this._token}`
             }
-            const resp = await ky.get(`${this.getUrlPrefix()}/repos/${args.join('/')}/hooks`, {
+            const resp = await ky.get<Tag[]>(`${this.getUrlPrefix()}/repos/${args.join('/')}/tags`, {
+                headers
+            });
+            return await resp.json();
+        }
+        catch (err) {
+            throw err;
+        }
+    }
+
+    async getHooks(...args: string[]) {
+        try {
+            const headers: HeadersInit = {};
+            if (this._token) {
+                headers['Authorization'] = `token ${this._token}`
+            }
+            const resp = await ky.get<Hook[]>(`${this.getUrlPrefix()}/repos/${args.join('/')}/hooks`, {
                 headers
             });
             return await resp.json();
@@ -118,7 +141,7 @@ export class Gitea {
 
     async sendTestWebhook(...args: string[]): Promise<void> {
         try {
-            let headers: HeadersInit = {};
+            const headers: HeadersInit = {};
             if (this._token) {
                 headers['Authorization'] = `token ${this._token}`
             }

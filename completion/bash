@@ -67,7 +67,7 @@ _artix_metro_completion() {
             ;;
         *)
             local metroCommon="-h --help --start --token --workspace"
-            local metroAdd="--increment -n --nocheck -r --rebuild"
+            local metroAdd="--increment -n --nocheck -r --rebuild --nexttag"
             case "${comps}" in
                 "artix-metro add"*)
                     case "${comp_cword_exflag}" in

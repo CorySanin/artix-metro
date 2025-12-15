@@ -61,6 +61,7 @@ export async function artixMetro() {
         increment: false,
         nocheck: false,
         rebuild: false,
+        nextTag: false,
         packages: []
     };
 
@@ -131,6 +132,9 @@ export async function artixMetro() {
                 case arg === '-r' || arg === '--rebuild':
                     job.rebuild = true;
                     break;
+                case arg === '--nexttag':
+                    job.nextTag = true;
+                    break;
                 case arg === '-p' || arg === '--push':
                     console.warn('-p option is implied.');
                     break;
@@ -171,6 +175,7 @@ export async function artixMetro() {
                 '--token <token>\t\tdefines the Gitea token to use for making calls to the Gitea API',
                 '-r, --rebuild\t\ttriggers a rebuild',
                 '-n, --nocheck\t\tdisable the check function',
+                '--nexttag\t\timport next tag immediately following the current one',
                 '--workspace <path>\tdefines the artools workspace',
                 '--increment\t\tenable increment mode',
                 '-h, --help\t\tshows this help message\n',
