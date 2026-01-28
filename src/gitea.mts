@@ -31,6 +31,12 @@ interface Hook {
     id: number;
 }
 
+function cacheBust(url: string): string {
+    const ts = Date.now();
+    const sep = url.indexOf('?') < 0 ? '?' : '&';
+    return `${url}${sep}cb=${ts}`;
+}
+
 export class Gitea {
     private _protocol: string;
     private _domain: string;
@@ -64,7 +70,7 @@ export class Gitea {
             if (this._token) {
                 headers['Authorization'] = `token ${this._token}`
             }
-            const resp = await ky.get(`${this.getUrlPrefix()}/repos/${args.join('/')}`, {
+            const resp = await ky.get(cacheBust(`${this.getUrlPrefix()}/repos/${args.join('/')}`), {
                 headers
             });
             return await resp.json();
@@ -80,7 +86,7 @@ export class Gitea {
             if (this._token) {
                 headers['Authorization'] = `token ${this._token}`
             }
-            const resp = await ky.get<Commit[]>(`${this.getUrlPrefix()}/repos/${args.join('/')}/commits?limit=10`, {
+            const resp = await ky.get<Commit[]>(cacheBust(`${this.getUrlPrefix()}/repos/${args.join('/')}/commits?limit=10`), {
                 headers
             });
             return await resp.json();
@@ -97,7 +103,7 @@ export class Gitea {
             if (this._token) {
                 headers['Authorization'] = `token ${this._token}`
             }
-            const resp = await ky.get<Status>(`${this.getUrlPrefix()}/repos/${args.join('/')}/commits/${commits[0]?.sha}/status`, {
+            const resp = await ky.get<Status>(cacheBust(`${this.getUrlPrefix()}/repos/${args.join('/')}/commits/${commits[0]?.sha}/status`), {
                 headers
             });
             return await resp.json();
@@ -113,7 +119,7 @@ export class Gitea {
             if (this._token) {
                 headers['Authorization'] = `token ${this._token}`
             }
-            const resp = await ky.get<Tag[]>(`${this.getUrlPrefix()}/repos/${args.join('/')}/tags`, {
+            const resp = await ky.get<Tag[]>(cacheBust(`${this.getUrlPrefix()}/repos/${args.join('/')}/tags`), {
                 headers
             });
             return await resp.json();
@@ -129,7 +135,7 @@ export class Gitea {
             if (this._token) {
                 headers['Authorization'] = `token ${this._token}`
             }
-            const resp = await ky.get<Hook[]>(`${this.getUrlPrefix()}/repos/${args.join('/')}/hooks`, {
+            const resp = await ky.get<Hook[]>(cacheBust(`${this.getUrlPrefix()}/repos/${args.join('/')}/hooks`), {
                 headers
             });
             return await resp.json();
