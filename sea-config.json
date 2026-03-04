@@ -1,0 +1,4 @@
+{
+    "main": "bin/artix-metro.mjs",
+    "output": "artix-metro"
+}
