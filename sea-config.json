@@ -1,4 +1,5 @@
 {
     "main": "bin/artix-metro.mjs",
+    "mainFormat": "module",
     "output": "artix-metro"
 }
