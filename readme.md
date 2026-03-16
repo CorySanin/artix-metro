@@ -1,5 +1,10 @@
 # artix-metro
 
+[![NPM License](https://img.shields.io/npm/l/artix-metro)](https://gitea.artixlinux.org/corysanin/artix-metro/src/branch/master/LICENSE)
+[![NPM Version](https://img.shields.io/npm/v/artix-metro)](https://www.npmjs.com/package/artix-metro)
+[![Artix package](https://repology.org/badge/version-for-repo/artix/artix-metro.svg)](https://repology.org/project/artix-metro/versions)
+
+
 Artix package pushing automation tool that waits for builds to pass before continuing in the queue.
 
 ## Features
