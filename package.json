@@ -6,21 +6,6 @@
     "artix",
     "artixlinux"
   ],
-  "type": "module",
-  "main": "distribution/index.mjs",
-  "bin": {
-    "artix-metro": "./bin/artix-metro.mjs"
-  },
-  "files": [
-    "distribution",
-    "bin",
-    "completion"
-  ],
-  "author": {
-    "name": "Cory Sanin",
-    "email": "corysanin@artixlinux.org",
-    "url": "https://sanin.dev/"
-  },
   "homepage": "https://gitea.artixlinux.org/corysanin/artix-metro",
   "bugs": {
     "url": "https://github.com/CorySanin/artix-metro/issues"
@@ -30,6 +15,33 @@
     "url": "git+https://gitea.artixlinux.org/corysanin/artix-metro.git"
   },
   "license": "MIT",
+  "author": {
+    "name": "Cory Sanin",
+    "email": "corysanin@artixlinux.org",
+    "url": "https://sanin.dev/"
+  },
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./distribution/index.d.mts",
+      "import": "./distribution/index.mjs"
+    }
+  },
+  "main": "distribution/index.mjs",
+  "types": "./distribution/index.d.mts",
+  "bin": {
+    "artix-metro": "./bin/artix-metro.mjs"
+  },
+  "files": [
+    "distribution",
+    "bin",
+    "completion"
+  ],
+  "scripts": {
+    "build": "npx tsc",
+    "clean": "rm -rf ./distribution",
+    "watch": "npx tsc -w"
+  },
   "dependencies": {
     "artix-checkupdates": "1.1.1",
     "cli-color": "2.0.4",
