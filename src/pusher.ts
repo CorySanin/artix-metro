@@ -176,7 +176,7 @@ export class Pusher {
         }
 
         console.log(clc.yellowBright('Running artix-checkupdates'));
-        const actionable = job.increment ? job.packages : (await (!!job.source ? checkupdates.fetchLooseMovable() : checkupdates.fetchUpgradable())).map(res => res.basename);
+        const actionable = job.increment ? job.packages : (await (!!job.source ? checkupdates.fetchLooseMovable(false, 8) : checkupdates.fetchUpgradable(false, 8))).map(res => res.basename);
 
         // order is IMPORTANT. Must be BLOCKING.
         for (let i = 0; i < (job.packages || []).length; i++) {
