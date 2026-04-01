@@ -1,5 +1,8 @@
 import ky from 'ky';
-import { snooze } from './snooze.mjs';
+import { snooze } from './snooze.js';
+
+// Expose your types, people!!
+export type HeadersInit = Record<string, string | undefined>;
 
 export type CiStatus = "pending" | "success" | "error" | "failure" | "";
 

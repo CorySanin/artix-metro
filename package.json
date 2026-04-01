@@ -1,6 +1,6 @@
 {
   "name": "artix-metro",
-  "version": "3.1.14",
+  "version": "3.1.15",
   "description": "Automate pushing packages to Artix",
   "keywords": [
     "artix",
@@ -23,22 +23,21 @@
   "type": "module",
   "exports": {
     ".": {
-      "types": "./distribution/index.d.mts",
-      "import": "./distribution/index.mjs"
+      "types": "./distribution/src/index.d.ts",
+      "import": "./distribution/src/index.js"
     }
   },
-  "main": "distribution/index.mjs",
-  "types": "./distribution/index.d.mts",
+  "main": "./distribution/src/index.js",
+  "types": "./distribution/src/index.d.ts",
   "bin": {
-    "artix-metro": "./bin/artix-metro.mjs"
+    "artix-metro": "./distribution/src/artix-metro.js"
   },
   "files": [
     "distribution",
-    "bin",
     "completion"
   ],
   "scripts": {
-    "build": "npx tsc",
+    "build": "npx tsc && rm ./distribution/src/*.map && chmod +x ./distribution/src/artix-metro.js",
     "clean": "rm -rf ./distribution",
     "watch": "npx tsc -w"
   },
@@ -54,6 +53,6 @@
     "@sindresorhus/tsconfig": "8.1.0",
     "@types/cli-color": "2.0.6",
     "@types/node": "25.5.0",
-    "typescript": "5.9.3"
+    "typescript": "6.0.2"
   }
 }

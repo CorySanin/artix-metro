@@ -14,13 +14,16 @@
             "env": {
                 "GPGPASS": "${input:gpgpass}"
             },
-            "program": "${workspaceFolder}/bin/artix-metro.mjs",
+            "program": "${workspaceFolder}/distribution/src/artix-metro.js",
+            "preLaunchTask": "tsc: build - tsconfig.json",
             "args": [
-                "--job",
-                "jobs/kde-01.json5"
+                "add",
+                "stable",
+                "telegram-desktop"
             ],
+            "sourceMaps": true,
             "outFiles": [
-                "${workspaceFolder}/distribution/*"
+                "${workspaceFolder}/distribution/**/*.js"
             ]
         }
     ],

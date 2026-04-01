@@ -21,7 +21,7 @@ Artix package pushing automation tool that waits for builds to pass before conti
 
 
 1) Install node dependencies with `npm install`
-2) Process the typescript source with `npm exec tsc`
+2) Process the typescript source with `npm run build`
 
 ## Config
 
@@ -34,14 +34,14 @@ Otherwise the program will prompt you for it on startup.
 
 Run a job:
 ```
-node bin/artix-metro.mjs --job jobs/example.json5
+npx artix-metro --job jobs/example.json5
 ```
 Run a job, skipping to a particular package:
 ```
-node bin/artix-metro.mjs --job jobs/example.json5 --start kmail
+npx artix-metro --job jobs/example.json5 --start kmail
 ```
 Run an ad hoc job via the CLI:
 ```
-node bin/artix-metro.mjs add stable libjpeg-turbo lib32-libjpeg-turbo
+npx artix-metro add stable libjpeg-turbo lib32-libjpeg-turbo
 ```
 Notice that as long as the same shorthand works for all packages (e.g. stable, gremlins, goblins), repos can vary from package to package.

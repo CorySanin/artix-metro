@@ -5,13 +5,13 @@ import clc from 'cli-color';
 import path from 'node:path';
 import os from 'node:os';
 import { Checkupdates } from 'artix-checkupdates';
-import { Gitea } from './gitea.mjs';
-import { Gitlab, type Tag } from './gitlab.mjs';
-import { DefaultConf } from './artoolsconf.mjs';
-import { snooze } from './snooze.mjs';
-import { runCommand, isPasswordRequired } from './runCommand.mjs';
+import { Gitea } from './gitea.js';
+import { Gitlab, type Tag } from './gitlab.js';
+import { DefaultConf } from './artoolsconf.js';
+import { snooze } from './snooze.js';
+import { runCommand, isPasswordRequired } from './runCommand.js';
 import type { ArtixRepo } from 'artix-checkupdates';
-import type { ArtoolsConf } from './artoolsconf.mts';
+import type { ArtoolsConf } from './artoolsconf.js';
 
 export interface PusherConfig {
     gpgpass?: string;

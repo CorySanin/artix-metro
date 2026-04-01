@@ -1,4 +1,5 @@
 import ky from 'ky';
+import type { HeadersInit } from './gitea.js'
 
 export interface GitlabConfig {
     protocol?: string;

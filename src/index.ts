@@ -5,11 +5,28 @@ import clc from 'cli-color';
 import JSON5 from 'json5';
 import { Writable } from 'stream';
 import { glob } from 'glob'
-import { Pusher } from './pusher.mjs';
-import { isPasswordRequired } from './runCommand.mjs';
-import { ArtoolsConfReader, DefaultConf } from './artoolsconf.mjs';
-import type { Job, ArtixpkgRepo } from './pusher.mts';
-import type { ArtoolsConf } from './artoolsconf.mts';
+import { Pusher } from './pusher.js';
+import { isPasswordRequired } from './runCommand.js';
+import { ArtoolsConfReader, DefaultConf } from './artoolsconf.js';
+import type { Job, ArtixpkgRepo } from './pusher.js';
+import type { ArtoolsConf } from './artoolsconf.js';
+
+export type {
+    ArtoolsConf
+} from './artoolsconf.js';
+
+export type {
+    GiteaConfig
+} from './gitea.js';
+
+export type {
+    GitlabConfig
+} from './gitlab.js';
+
+export type {
+    Job,
+    PusherConfig
+} from './pusher.js';
 
 /**
  * Prompts the user to input their GPG password via stdin
@@ -47,11 +64,11 @@ async function getGpgPass() {
     return password;
 }
 
-export async function expandGlob(workspace: string, globby: string): Promise<string[]> {
-    return (await glob(path.join(globby, 'README.md'), {
+async function expandGlob(workspace: string, globby: string): Promise<string[]> {
+    return (await glob(path.join(globby, '.artixlinux', 'pkgbase.yaml'), {
         cwd: path.join(workspace, 'artixlinux'),
-        maxDepth: 2
-    })).map(p => path.dirname(p));
+        maxDepth: 3
+    })).map(p => p.split(path.sep)[0]);
 }
 
 export async function artixMetro() {
