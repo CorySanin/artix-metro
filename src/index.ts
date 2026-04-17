@@ -212,7 +212,8 @@ export async function artixMetro() {
 
         if (jobfile) {
             try {
-                job = JSON5.parse((await fsp.readFile(jobfile)).toString());
+                const newjob: Partial<Job> = JSON5.parse((await fsp.readFile(jobfile)).toString());
+                job = Object.assign(job, newjob);
             }
             catch (ex) {
                 console.error('A jobfile was provided but could not be read:');
