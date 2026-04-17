@@ -34,10 +34,11 @@
   },
   "files": [
     "distribution",
+    "!distribution/**/*.js.map",
     "completion"
   ],
   "scripts": {
-    "build": "npx tsc && rm ./distribution/src/*.map && chmod +x ./distribution/src/artix-metro.js",
+    "build": "npx tsc && chmod +x ./distribution/src/artix-metro.js",
     "clean": "rm -rf ./distribution",
     "watch": "npx tsc -w"
   },
