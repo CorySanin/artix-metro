@@ -1,0 +1,18 @@
+{
+    "repo": "gremlins",
+    "increment": false,
+    "packages": [
+        "intel-oneapi-common",
+        "intel-oneapi-umf",
+        "intel-oneapi-tcm",
+        "intel-oneapi-tbb",
+        "intel-oneapi-openmp",
+        "intel-oneapi-mkl",
+        "intel-oneapi-compiler-shared-runtime",
+        "intel-oneapi-dpcpp-debugger",
+        "intel-oneapi-compiler-shared",
+        "intel-oneapi-dev-utilities",
+        "intel-oneapi-compiler-dpcpp-cpp-runtime",
+        "intel-oneapi-dpcpp-cpp"
+    ]
+}
