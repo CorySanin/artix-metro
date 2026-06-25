@@ -1,0 +1,4 @@
+allowBuilds:
+  es5-ext: false
+minimumReleaseAgeExclude:
+  - '@types/node@26.0.1'

@@ -23,7 +23,7 @@ _artix_metro_completion() {
         '--job[Specify a job]: :_files' \
         '--workspace[Specify a workspace]: :_files -/' \
         '--start[Start a process]:pkgbase:(${pkgbase})' \
-        '1:command:(${metroCommon} add move)' \
+        '1:command:(${metroCommon} add move wait)' \
         '2:repo:(${metroCommon} ${autorepos} ${repos})' \
         '*:pkgbase:->pkgbase'
 
@@ -31,6 +31,9 @@ _artix_metro_completion() {
     case $state in
         pkgbase)
             case $words[2] in
+                wait)
+                    _values "pkgbase" "${pkgbase[@]}"
+                    ;;
                 add)
                     if (( CURRENT == 3 )); then
                         # First argument after "add" is a repo

@@ -23,6 +23,7 @@ export interface Job extends Partial<ArtoolsConf> {
     source?: ArtixpkgRepo;
     repo: ArtixpkgRepo;
     increment: boolean;
+    commit?: boolean;
     nocheck: boolean;
     rebuild: boolean;
     packages: string[];
@@ -142,7 +143,7 @@ export class Pusher {
             const matchTag = getUpstreamTag(current.name);
             let previousTag: null | Tag = null;
             let chosenTag: null | Tag = null;
-            for(const tag of tags) {
+            for (const tag of tags) {
                 if (tag.name === matchTag) {
                     chosenTag = previousTag;
                     break;
@@ -165,7 +166,7 @@ export class Pusher {
         this._artools.workspace = job.workspace || this._artools.workspace;
         gitea.setToken(job.giteaToken);
 
-        if (!job.repo) {
+        if (!job.repo && job.commit !== false) {
             throw new Error('Must provide `repo` destination in config!');
         }
         if (job.increment && !this._artools?.workspace) {
@@ -175,8 +176,8 @@ export class Pusher {
             throw new Error('increment can\'t be set to true for a move operation. Set increment to false or remove the source repo.');
         }
 
-        console.log(clc.yellowBright('Running artix-checkupdates'));
-        const actionable = job.increment ? job.packages : (await (!!job.source ? checkupdates.fetchLooseMovable(false, 8) : checkupdates.fetchUpgradable(false, 8))).map(res => res.basename);
+        !job.increment && job.commit !== false && console.log(clc.yellowBright('Running artix-checkupdates'));
+        const actionable = job.increment || job.commit === false ? job.packages : (await (!!job.source ? checkupdates.fetchLooseMovable(false, 8) : checkupdates.fetchUpgradable(false, 8))).map(res => res.basename);
 
         // order is IMPORTANT. Must be BLOCKING.
         for (let i = 0; i < (job.packages || []).length; i++) {
@@ -187,7 +188,7 @@ export class Pusher {
                 continue;
             }
             console.log((new Date()).toLocaleTimeString() + clc.magentaBright(` Package ${i}/${job.packages.length}`));
-            while (!job.source) {
+            while (!job.source && job.commit !== false) {
                 try {
                     lastHash = (await gitea.getStatus(PACKAGE_ORG, p)).sha
                     console.log(`current sha: ${lastHash}`);
@@ -198,27 +199,29 @@ export class Pusher {
                     await snooze(30000);
                 }
             }
-            console.log(clc.yellowBright(`Pushing ${p} ...`));
-            if (job.source) {
-                try {
-                    await this.refreshGpg();
-                    await runCommand('artixpkg', ['repo', 'move', '-p', job.source, job.repo, p]);
-                }
-                catch {
-                    console.log(clc.cyan(`Moving ${p} failed.`));
-                }
-            }
-            else {
-                if (job.increment) {
-                    await this.increment(p);
+            if (job.commit !== false) {
+                console.log(clc.yellowBright(`Pushing ${p} ...`));
+                if (job.source) {
+                    try {
+                        await this.refreshGpg();
+                        await runCommand('artixpkg', ['repo', 'move', '-p', job.source, job.repo, p]);
+                    }
+                    catch {
+                        console.log(clc.cyan(`Moving ${p} failed.`));
+                    }
                 }
                 else {
-                    await runCommand('artixpkg', await this.createRepoImportArgs(job, p));
+                    if (job.increment) {
+                        await this.increment(p);
+                    }
+                    else {
+                        await runCommand('artixpkg', await this.createRepoImportArgs(job, p));
+                    }
+                    await this.refreshGpg();
+                    await runCommand('artixpkg', createRepoAddArgs(job, p));
                 }
-                await this.refreshGpg();
-                await runCommand('artixpkg', createRepoAddArgs(job, p));
+                console.log(clc.blueBright(`${p} commit pushed`));
             }
-            console.log(clc.blueBright(`${p} commit pushed`));
             if (!job.source) {
                 try {
                     await gitea.waitForBuild(lastHash, PACKAGE_ORG, p)

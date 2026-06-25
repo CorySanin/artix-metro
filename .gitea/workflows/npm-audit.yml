@@ -21,7 +21,10 @@ jobs:
 
     steps:
     - name: Checkout repository
-      uses: https://github.com/actions/checkout@v4
+      uses: actions/checkout@v7
+
+    - name: set up pnpm
+      uses: pnpm/action-setup@v6
 
     - name: NPM Audit
-      run: npm audit
+      run: pnpm audit

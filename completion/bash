@@ -69,6 +69,9 @@ _artix_metro_completion() {
             local metroCommon="-h --help --start --token --workspace"
             local metroAdd="--increment -n --nocheck -r --rebuild --nexttag"
             case "${comps}" in
+                "artix-metro wait"*)
+                    COMPREPLY=($(compgen -W "$metroCommon $(_artixpkg_pkgbase)" -- ${cur}))
+                    ;;
                 "artix-metro add"*)
                     case "${comp_cword_exflag}" in
                         2)
@@ -90,7 +93,7 @@ _artix_metro_completion() {
                     esac
                     ;;
                 *)
-                    COMPREPLY=($(compgen -W "$metroCommon -j --job add move" -- ${cur}))
+                    COMPREPLY=($(compgen -W "$metroCommon -j --job add move wait" -- ${cur}))
                     ;;
             esac
             ;;

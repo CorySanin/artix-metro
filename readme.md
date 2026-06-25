@@ -20,8 +20,8 @@ Artix package pushing automation tool that waits for builds to pass before conti
 `artix-checkupdates` is required. I highly recommend configuring it to use the developer artix mirror.
 
 
-1) Install node dependencies with `npm install`
-2) Process the typescript source with `npm run build`
+1) Install node dependencies with `pnpm install`
+2) Process the typescript source with `pnpm run build`
 
 ## Config
 

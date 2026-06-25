@@ -83,7 +83,7 @@ export async function artixMetro() {
     };
 
     await (async function () {
-        let mode: 'add' | 'move' | null = null;
+        let mode: 'add' | 'move' | 'wait' | null = null;
         let startPkg: string | null = null;
         let jobfile: string | null = null;
         let skipOne = false;
@@ -161,8 +161,12 @@ export async function artixMetro() {
                 case arg.startsWith('-'):
                     console.error(`unrecognized option '${arg}'`);
                     process.exit(1);
-                case !mode && (arg === 'add' || arg === 'move'):
+                case !mode && (arg === 'add' || arg === 'move' || arg === 'wait'):
                     mode = arg;
+                    if (mode === 'wait') {
+                        job.commit = false;
+                        job.repo = 'galaxy-goblins';
+                    }
                     break;
                 case mode === 'move' && !(job as Job).source:
                     job.source = arg as ArtixpkgRepo;
@@ -242,7 +246,7 @@ export async function artixMetro() {
     console.log('artix-metro - Developed by Cory Sanin\n');
 
     let pusher = new Pusher({
-        gpgpass: process.env['GPGPASS'] || (await getGpgPass()) || ''
+        gpgpass: (job.commit !== false && (process.env['GPGPASS'] || (await getGpgPass()))) || ''
     }, artoolsConf);
 
     try {
