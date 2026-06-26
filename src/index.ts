@@ -228,7 +228,13 @@ export async function artixMetro() {
         else if (job.packages) {
             const expanded: string[] = [];
             for (let i = 0; i < (job.packages.length || 0); i++) {
-                (await expandGlob(artoolsConf.workspace, job.packages[i] as string)).forEach(p => expanded.push(p));
+                const expand = await expandGlob(artoolsConf.workspace, job.packages[i]);
+                if (expand.length) {
+                    expanded.push(...expand);
+                }
+                else if (job.commit === false) {
+                    expanded.push(job.packages[i]);
+                }
             }
             job.packages = expanded;
         }
