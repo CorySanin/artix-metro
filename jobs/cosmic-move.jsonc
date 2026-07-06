@@ -31,6 +31,7 @@
         "cosmic-workspaces",
         "cosmic-idle",
         "cosmic-session",
-        "cosmic-player"
+        "cosmic-player",
+        "cosmic-monitor"
     ]
 }
