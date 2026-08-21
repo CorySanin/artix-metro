@@ -285,6 +285,8 @@
         "kgraphviewer",
         "massif-visualizer",
         "calligra",
-        "qrca"
+        "qrca",
+        "keepsecret",
+        "kdominate"
     ]
 }
