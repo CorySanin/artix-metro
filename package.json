@@ -1,6 +1,6 @@
 {
   "name": "artix-metro",
-  "version": "3.2.1",
+  "version": "3.2.2",
   "description": "Automate pushing packages to Artix",
   "keywords": [
     "artix",
@@ -56,5 +56,5 @@
     "@types/node": "26.0.1",
     "typescript": "6.0.3"
   },
-  "packageManager": "pnpm@11.9.0"
+  "packageManager": "pnpm@12.4.1"
 }
