@@ -2,7 +2,7 @@ import * as fsp from 'node:fs/promises';
 import * as readline from 'node:readline/promises';
 import path from 'node:path';
 import clc from 'cli-color';
-import JSON5 from 'json5';
+import { parse } from 'yaml';
 import { Writable } from 'stream';
 import { glob } from 'glob'
 import { Pusher } from './pusher.js';
@@ -216,7 +216,7 @@ export async function artixMetro() {
 
         if (jobfile) {
             try {
-                const newjob: Partial<Job> = JSON5.parse((await fsp.readFile(jobfile)).toString());
+                const newjob: Partial<Job> = parse((await fsp.readFile(jobfile)).toString());
                 job = Object.assign(job, newjob);
             }
             catch (ex) {

@@ -99,7 +99,7 @@ public
 
 distribution/
 jobs/*
-!jobs/example.jsonc
-!jobs/*-add.json*
-!jobs/*-move.json*
+!jobs/example.yaml
+!jobs/*-add.*
+!jobs/*-move.*
 artix-metro

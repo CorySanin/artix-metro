@@ -1,6 +1,6 @@
 {
   "name": "artix-metro",
-  "version": "3.2.3",
+  "version": "3.3.0",
   "description": "Automate pushing packages to Artix",
   "keywords": [
     "artix",
@@ -46,9 +46,9 @@
     "artix-checkupdates": "1.3.1",
     "cli-color": "2.0.4",
     "glob": "13.0.6",
-    "json5": "2.2.3",
     "ky": "2.2.0",
-    "spawn-but-with-promises": "^1.0.4"
+    "spawn-but-with-promises": "^1.0.4",
+    "yaml": "^2.9.1"
   },
   "devDependencies": {
     "@sindresorhus/tsconfig": "8.1.0",

@@ -1,12 +1,12 @@
 {
-    // set source to move packages, or leave it undefined to upgrade packages
+    # set source to move packages, or leave it undefined to upgrade packages
     "source": null,
-    // The destination repo
+    # The destination repo
     "repo": "world-gremlins",
-    // (experimental) if set to true (and source is "trunk"),
-    // package won't import from upstream and will instead do a .1 pkgrel bump on all packages.
-    // Useful if packages were mistakenly built out of order.
-    // Rarely used, not well tested. Use at your own risk.
+    # (experimental) if set to true (and source is "trunk"),
+    # package won't import from upstream and will instead do a .1 pkgrel bump on all packages.
+    # Useful if packages were mistakenly built out of order.
+    # Rarely used, not well tested. Use at your own risk.
     "increment": false,
     "packages": [
         "grantleetheme",
